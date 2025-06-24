@@ -29,6 +29,20 @@
                                 <span class="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">{{ $pendingCount }}</span>
                             @endif
                         </a>
+                        <a href="{{ route('groups.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('groups.*') && !request()->routeIs('groups.my-invitations') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
+                            Groups
+                        </a>
+                        <a href="{{ route('groups.my-invitations') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('groups.my-invitations') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
+                            Invitations
+                            @php
+                                $pendingInvitations = \App\Models\GroupInvitation::where('invited_user_id', Auth::id())
+                                    ->where('status', 'pending')
+                                    ->count();
+                            @endphp
+                            @if($pendingInvitations > 0)
+                                <span class="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">{{ $pendingInvitations }}</span>
+                            @endif
+                        </a>
                     </div>
                 @endauth
             </div>
@@ -72,13 +86,21 @@
 
     <!-- Mobile menu -->
     @auth
-        <div class="sm:hidden">
-            <div class="pt-2 pb-3 space-y-1">
+        <div class="sm:hidden">            <div class="pt-2 pb-3 space-y-1">
                 <a href="{{ route('dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('dashboard') ? 'border-indigo-500 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300' }} text-base font-medium">
                     Dashboard
                 </a>
                 <a href="{{ route('gamertag.test') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('gamertag.test') ? 'border-indigo-500 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300' }} text-base font-medium">
                     Browse Gamertags
+                </a>
+                <a href="{{ route('social.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('social.*') ? 'border-indigo-500 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300' }} text-base font-medium">
+                    Social
+                </a>
+                <a href="{{ route('groups.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('groups.*') && !request()->routeIs('groups.my-invitations') ? 'border-indigo-500 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300' }} text-base font-medium">
+                    Groups
+                </a>
+                <a href="{{ route('groups.my-invitations') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('groups.my-invitations') ? 'border-indigo-500 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300' }} text-base font-medium">
+                    Invitations
                 </a>
             </div>
         </div>

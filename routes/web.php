@@ -88,3 +88,21 @@ Route::middleware('auth')->group(function () {
     Route::patch('/connections/{connection}/block', [\App\Http\Controllers\UserConnectionController::class, 'block'])->name('connections.block');
     Route::delete('/connections/{connection}', [\App\Http\Controllers\UserConnectionController::class, 'destroy'])->name('connections.destroy');
 });
+
+// Group Routes (protected)
+Route::middleware('auth')->group(function () {
+    // Group management
+    Route::resource('groups', \App\Http\Controllers\GroupController::class);
+    Route::get('/my-groups', [\App\Http\Controllers\GroupController::class, 'myGroups'])->name('groups.my-groups');
+    Route::post('/groups/{group}/join', [\App\Http\Controllers\GroupController::class, 'join'])->name('groups.join');
+    Route::delete('/groups/{group}/leave', [\App\Http\Controllers\GroupController::class, 'leave'])->name('groups.leave');
+    
+    // Group invitations
+    Route::get('/my-invitations', [\App\Http\Controllers\GroupInvitationController::class, 'index'])->name('groups.my-invitations');
+    Route::post('/group-invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])->name('group-invitations.store');
+    Route::get('/group-invitations/{invitation}', [\App\Http\Controllers\GroupInvitationController::class, 'show'])->name('group-invitations.show');
+    Route::patch('/group-invitations/{invitation}/accept', [\App\Http\Controllers\GroupInvitationController::class, 'accept'])->name('group-invitations.accept');
+    Route::patch('/group-invitations/{invitation}/decline', [\App\Http\Controllers\GroupInvitationController::class, 'decline'])->name('group-invitations.decline');
+    Route::delete('/group-invitations/{invitation}/cancel', [\App\Http\Controllers\GroupInvitationController::class, 'cancel'])->name('group-invitations.cancel');
+    Route::post('/group-invitations/bulk-action', [\App\Http\Controllers\GroupInvitationController::class, 'bulkAction'])->name('group-invitations.bulk-action');
+});

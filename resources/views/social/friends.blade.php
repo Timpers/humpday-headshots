@@ -23,11 +23,10 @@
                                     <span class="text-xl font-medium text-gray-700 dark:text-gray-300">
                                         {{ substr($friend->name, 0, 1) }}
                                     </span>
-                                </div>
-                                <div class="ml-4">
+                                </div>                                <div class="ml-4">
                                     <h3 class="font-medium text-gray-900 dark:text-white">{{ $friend->name }}</h3>
                                     <p class="text-xs text-gray-600 dark:text-gray-400">
-                                        Connected {{ $connection->accepted_at->diffForHumans() }}
+                                        Connected {{ $connection->accepted_at ? $connection->accepted_at->diffForHumans() : 'recently' }}
                                     </p>
                                 </div>
                             </div>

@@ -3,8 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\GroupMembershipPivot;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -179,5 +181,106 @@ class User extends Authenticatable
             'is_requester' => $connection->requester_id === $this->id,
             'connection' => $connection,
         ];
+    }
+
+    // GROUP RELATIONSHIPS
+
+    /**
+     * Get groups owned by this user.
+     */
+    public function ownedGroups(): HasMany
+    {
+        return $this->hasMany(Group::class, 'owner_id');
+    }
+
+    /**
+     * Get all group memberships for this user.
+     */
+    public function groupMemberships(): HasMany
+    {
+        return $this->hasMany(GroupMembership::class);
+    }
+
+    /**
+     * Get all groups this user is a member of.
+     */
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'group_memberships')
+                    ->using(GroupMembershipPivot::class)
+                    ->withPivot(['role', 'joined_at', 'permissions'])
+                    ->withTimestamps()
+                    ->orderBy('group_memberships.joined_at', 'desc');
+    }
+
+    /**
+     * Get group invitations sent by this user.
+     */
+    public function sentGroupInvitations(): HasMany
+    {
+        return $this->hasMany(GroupInvitation::class, 'invited_by_user_id');
+    }
+
+    /**
+     * Get group invitations received by this user.
+     */
+    public function receivedGroupInvitations(): HasMany
+    {
+        return $this->hasMany(GroupInvitation::class, 'invited_user_id');
+    }
+
+    /**
+     * Get pending group invitations for this user.
+     */
+    public function pendingGroupInvitations(): HasMany
+    {
+        return $this->hasMany(GroupInvitation::class, 'invited_user_id')->where('status', 'pending');
+    }
+
+    /**
+     * Check if user is a member of a specific group.
+     */
+    public function isMemberOf(Group $group): bool
+    {
+        return $this->groupMemberships()->where('group_id', $group->id)->exists();
+    }
+
+    /**
+     * Check if user is an admin of a specific group.
+     */
+    public function isAdminOf(Group $group): bool
+    {
+        $membership = $this->groupMemberships()->where('group_id', $group->id)->first();
+        return $membership && in_array($membership->role, ['admin', 'owner']);
+    }
+
+    /**
+     * Check if user owns a specific group.
+     */
+    public function ownsGroup(Group $group): bool
+    {
+        return $group->owner_id === $this->id;
+    }
+
+    /**
+     * Get the user's role in a specific group.
+     */
+    public function getRoleInGroup(Group $group): ?string
+    {
+        $membership = $this->groupMemberships()->where('group_id', $group->id)->first();
+        return $membership ? $membership->role : null;
+    }
+
+    /**
+     * Get array of friend user IDs.
+     */
+    public function getFriendIds(): array
+    {
+        $friendConnections = $this->friends()->get();
+        return $friendConnections->map(function ($connection) {
+            return $connection->requester_id === $this->id 
+                ? $connection->recipient_id 
+                : $connection->requester_id;
+        })->toArray();
     }
 }

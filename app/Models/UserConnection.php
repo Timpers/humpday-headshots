@@ -98,4 +98,25 @@ class UserConnection extends Model
     {
         return $this->status === self::STATUS_PENDING;
     }
+
+    /**
+     * Accept the connection request
+     */
+    public function accept()
+    {
+        $this->update([
+            'status' => self::STATUS_ACCEPTED,
+            'accepted_at' => now(),
+        ]);
+    }
+
+    /**
+     * Decline the connection request
+     */
+    public function decline()
+    {
+        $this->update([
+            'status' => self::STATUS_DECLINED,
+        ]);
+    }
 }
