@@ -62,10 +62,54 @@ class GamingSessionInvitation extends Model
     }
 
     /**
+     * Check if this invitation is for a user.
+     */
+    public function isUserInvitation(): bool
+    {
+        return !is_null($this->invited_user_id);
+    }
+
+    /**
+     * Check if this invitation is for a group.
+     */
+    public function isGroupInvitation(): bool
+    {
+        return !is_null($this->invited_group_id);
+    }
+
+    /**
+     * Check if the invitation is pending.
+     */
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Check if the invitation is accepted.
+     */
+    public function isAccepted(): bool
+    {
+        return $this->status === self::STATUS_ACCEPTED;
+    }
+
+    /**
+     * Check if the invitation is declined.
+     */
+    public function isDeclined(): bool
+    {
+        return $this->status === self::STATUS_DECLINED;
+    }
+
+    /**
      * Accept this invitation.
      */
     public function accept(): bool
     {
+        if (!$this->isPending()) {
+            return false;
+        }
+
         $this->update([
             'status' => self::STATUS_ACCEPTED,
             'responded_at' => now(),
@@ -88,26 +132,14 @@ class GamingSessionInvitation extends Model
      */
     public function decline(): bool
     {
+        if (!$this->isPending()) {
+            return false;
+        }
+
         return $this->update([
             'status' => self::STATUS_DECLINED,
             'responded_at' => now(),
         ]);
-    }
-
-    /**
-     * Check if this invitation is for a user.
-     */
-    public function isUserInvitation(): bool
-    {
-        return !is_null($this->invited_user_id);
-    }
-
-    /**
-     * Check if this invitation is for a group.
-     */
-    public function isGroupInvitation(): bool
-    {
-        return !is_null($this->invited_group_id);
     }
 
     /**
@@ -116,6 +148,22 @@ class GamingSessionInvitation extends Model
     public function scopePending($query)
     {
         return $query->where('status', self::STATUS_PENDING);
+    }
+
+    /**
+     * Scope to get accepted invitations.
+     */
+    public function scopeAccepted($query)
+    {
+        return $query->where('status', self::STATUS_ACCEPTED);
+    }
+
+    /**
+     * Scope to get declined invitations.
+     */
+    public function scopeDeclined($query)
+    {
+        return $query->where('status', self::STATUS_DECLINED);
     }
 
     /**
@@ -132,5 +180,13 @@ class GamingSessionInvitation extends Model
     public function scopeGroupInvitations($query)
     {
         return $query->whereNotNull('invited_group_id');
+    }
+
+    /**
+     * Scope to get invitations for a specific user.
+     */
+    public function scopeForUser($query, User $user)
+    {
+        return $query->where('invited_user_id', $user->id);
     }
 }

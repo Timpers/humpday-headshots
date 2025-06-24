@@ -68,10 +68,34 @@ class GamingSessionParticipant extends Model
     }
 
     /**
+     * Check if the participant is active (joined).
+     */
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_JOINED;
+    }
+
+    /**
      * Scope to get active participants.
      */
     public function scopeActive($query)
     {
         return $query->where('status', self::STATUS_JOINED);
+    }
+
+    /**
+     * Scope to get participants for a specific session.
+     */
+    public function scopeForSession($query, GamingSession $session)
+    {
+        return $query->where('gaming_session_id', $session->id);
+    }
+
+    /**
+     * Scope to get participations for a specific user.
+     */
+    public function scopeForUser($query, User $user)
+    {
+        return $query->where('user_id', $user->id);
     }
 }
