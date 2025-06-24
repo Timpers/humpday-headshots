@@ -7,6 +7,7 @@ use App\Models\GamingSessionInvitation;
 use App\Models\GamingSessionParticipant;
 use App\Models\User;
 use App\Models\Group;
+use App\Notifications\GamingSessionInvitation as GamingSessionInvitationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -123,22 +124,39 @@ class GamingSessionController extends Controller
             // Send invitations to friends
             if ($request->invite_friends) {
                 foreach ($request->invite_friends as $friendId) {
-                    GamingSessionInvitation::create([
+                    $invitation = GamingSessionInvitation::create([
                         'gaming_session_id' => $session->id,
                         'invited_user_id' => $friendId,
                         'invited_by_user_id' => Auth::id(),
                     ]);
+
+                    // Send email notification
+                    $invitedUser = User::find($friendId);
+                    if ($invitedUser) {
+                        $invitedUser->notify(new GamingSessionInvitationNotification($invitation));
+                    }
                 }
             }
 
             // Send invitations to groups
             if ($request->invite_groups) {
                 foreach ($request->invite_groups as $groupId) {
-                    GamingSessionInvitation::create([
+                    $invitation = GamingSessionInvitation::create([
                         'gaming_session_id' => $session->id,
                         'invited_group_id' => $groupId,
                         'invited_by_user_id' => Auth::id(),
                     ]);
+
+                    // Send notifications to all group members
+                    $group = Group::find($groupId);
+                    if ($group) {
+                        foreach ($group->members as $member) {
+                            // Don't send notification to the session host
+                            if ($member->id !== Auth::id()) {
+                                $member->notify(new GamingSessionInvitationNotification($invitation));
+                            }
+                        }
+                    }
                 }
             }
         });
