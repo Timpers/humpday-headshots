@@ -40,12 +40,18 @@ A comprehensive gaming profile and library management platform built with Larave
 
 ### ⏰ Gaming Sessions
 - **Session Scheduling**: Create gaming sessions with date, time, and game selection
-- **IGDB Game Search**: Real-time game search and selection with cover art
+- **IGDB Game Search**: Real-time game search and selection with rich game metadata
+- **Manual Game Entry**: Fallback option for games not found in IGDB
 - **Multi-Level Invitations**: Invite individual friends or entire groups
-- **Session Management**: Join, leave, and manage participant lists
+- **Email Notifications**: Automated email invitations with session details
+- **Database Notifications**: In-app notifications for invitation tracking
+- **Session Management**: Join, leave, and manage participant lists with real-time updates
 - **Privacy Controls**: Public, friends-only, or invite-only sessions
 - **Session Discovery**: Browse public sessions and upcoming events
-- **Real-time Updates**: Session status tracking and notifications
+- **Capacity Management**: Set maximum participants and track session availability
+- **Real-time Status Tracking**: Live session status and participant management
+- **Authorization System**: Host-only session editing and management controls
+- **Responsive UI**: Beautiful, mobile-friendly session creation and management interface
 
 ### 🔐 Authentication System
 - **Secure Registration & Login**: Full authentication flow
@@ -79,6 +85,14 @@ A comprehensive gaming profile and library management platform built with Larave
 - `@tailwindcss/vite`: ^4.0.0
 - `vite`: ^6.2.4
 - `axios`: ^1.8.2
+
+### Key Features Implemented
+- **Email Notifications**: Laravel Notifications with queue support
+- **Session Management**: Complete CRUD operations with authorization
+- **IGDB Integration**: Real-time game search with fallback manual entry
+- **Database Design**: Comprehensive schema with proper relationships
+- **Unit Testing**: Full test coverage for all gaming session models
+- **Policy Authorization**: Secure host-only session management
 
 ## 🚀 Installation
 
@@ -128,6 +142,19 @@ DB_PASSWORD=your_password
 # IGDB API Configuration (via Twitch)
 TWITCH_CLIENT_ID=your_twitch_client_id
 TWITCH_CLIENT_SECRET=your_twitch_client_secret
+
+# Mail Configuration (for gaming session invitations)
+MAIL_MAILER=smtp
+MAIL_HOST=127.0.0.1
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+# Queue Configuration (for email notifications)
+QUEUE_CONNECTION=database
 ```
 
 ### Step 5: Database Setup
@@ -135,11 +162,25 @@ TWITCH_CLIENT_SECRET=your_twitch_client_secret
 # Run migrations
 php artisan migrate
 
+# Create notifications table (for gaming session invitations)
+php artisan notifications:table
+php artisan migrate
+
 # Seed the database (optional - creates sample data)
 php artisan db:seed
 ```
 
-### Step 6: Build Assets
+### Step 6: Queue Setup (for Email Notifications)
+```bash
+# Run queue migration
+php artisan queue:table
+php artisan migrate
+
+# Start queue worker (in a separate terminal)
+php artisan queue:work
+```
+
+### Step 7: Build Assets
 ```bash
 # Development build
 npm run dev
@@ -148,12 +189,17 @@ npm run dev
 npm run build
 ```
 
-### Step 7: Start Development Server
+### Step 8: Start Development Server
 ```bash
 php artisan serve
 ```
 
 Visit `http://localhost:8000` to access the application.
+
+**Note**: For gaming session email notifications to work, ensure the queue worker is running in a separate terminal:
+```bash
+php artisan queue:work
+```
 
 ## 🔑 IGDB API Setup
 
@@ -181,14 +227,22 @@ Visit `http://localhost:8000` to access the application.
 ```
 app/
 ├── Http/Controllers/
-│   ├── Auth/                    # Authentication controllers
-│   ├── DashboardController.php  # Main dashboard
-│   ├── GameController.php       # Game management
-│   └── GamertagController.php   # Gamertag management
+│   ├── Auth/                        # Authentication controllers
+│   ├── DashboardController.php      # Main dashboard
+│   ├── GameController.php           # Game management
+│   ├── GamertagController.php       # Gamertag management
+│   └── GamingSessionController.php  # Gaming session management
 ├── Models/
-│   ├── User.php                 # User model with relationships
-│   ├── Game.php                 # Game library model
-│   └── Gamertag.php            # Gamertag model
+│   ├── User.php                     # User model with relationships
+│   ├── Game.php                     # Game library model
+│   ├── Gamertag.php                # Gamertag model
+│   ├── GamingSession.php           # Gaming session model
+│   ├── GamingSessionInvitation.php # Session invitation model
+│   └── GamingSessionParticipant.php # Session participant model
+├── Notifications/
+│   └── GamingSessionInvitation.php  # Email notification for invitations
+├── Policies/
+│   └── GamingSessionPolicy.php      # Authorization for session management
 └── ...
 
 database/
@@ -198,15 +252,16 @@ database/
 
 resources/
 ├── views/
-│   ├── layouts/                # Base templates
-│   ├── auth/                   # Authentication views
-│   ├── games/                  # Game management views
-│   ├── gamertags/             # Gamertag management views
-│   └── dashboard.blade.php     # Main dashboard
+│   ├── layouts/                    # Base templates
+│   ├── auth/                       # Authentication views
+│   ├── games/                      # Game management views
+│   ├── gamertags/                 # Gamertag management views
+│   ├── gaming-sessions/           # Gaming session management views
+│   └── dashboard.blade.php         # Main dashboard
 ├── css/
-│   └── app.css                 # Tailwind CSS
+│   └── app.css                     # Tailwind CSS
 └── js/
-    └── app.js                  # JavaScript entry point
+    └── app.js                      # JavaScript entry point
 
 routes/
 └── web.php                     # Application routes
@@ -233,12 +288,28 @@ routes/
 4. **Track Progress**: Update hours played, completion status, ratings
 
 ### Managing Gaming Sessions
-1. **Create Session**: Navigate to Sessions → Create Session
-2. **Select Game**: Use IGDB search to find and select your game
-3. **Set Details**: Choose date/time, max participants, and privacy level
-4. **Send Invitations**: Invite specific friends or entire groups
-5. **Manage Sessions**: Join, leave, or cancel sessions as needed
-6. **Browse Sessions**: Discover public sessions or view your upcoming events
+1. **Create Session**: Navigate to Gaming Sessions → Create Session
+2. **Game Selection**: 
+   - Use IGDB search to find games with rich metadata
+   - Use manual entry for games not in IGDB database
+3. **Session Configuration**: 
+   - Set date, time, and duration
+   - Configure maximum participants
+   - Choose privacy level (public, friends-only, invite-only)
+   - Add session description and requirements
+4. **Send Invitations**: 
+   - Invite specific friends individually
+   - Invite entire groups at once
+   - Include personal messages with invitations
+5. **Session Management**: 
+   - View all your hosted and participating sessions
+   - Join or leave sessions
+   - Track session status and participant count
+   - Edit or cancel sessions you host
+6. **Notifications**: 
+   - Receive email notifications for new invitations
+   - Get in-app notifications for session updates
+   - Track invitation responses and participant changes
 
 ### Social Features
 1. **Browse Users**: Navigate to Social → Browse to see all users with public gamertags
@@ -256,11 +327,25 @@ routes/
 5. **Moderate Discussions**: Manage group content and discussions
 
 ### Gaming Sessions
-1. **Schedule Session**: Navigate to Sessions → Schedule
-2. **Select Game**: Use IGDB search to find and select a game
-3. **Set Date & Time**: Choose when to play
-4. **Invite Friends/Groups**: Send invites to friends or entire groups
-5. **Manage Session**: Start, join, or leave sessions as needed
+1. **Schedule Session**: Navigate to Gaming Sessions → Create
+2. **Game Selection**: 
+   - Search IGDB database for comprehensive game information
+   - Use manual entry if game not found in IGDB
+3. **Session Details**: 
+   - Set scheduled date and time
+   - Configure maximum participants
+   - Choose privacy settings
+4. **Invitation System**: 
+   - Send invites to individual friends
+   - Invite entire groups at once
+   - Include custom messages with invitations
+5. **Session Management**: 
+   - Join, leave, or cancel sessions
+   - Track participant status in real-time
+   - Manage session capacity and availability
+6. **Notifications**: 
+   - Receive email notifications for invitations
+   - Get in-app notifications for session updates
 
 ### Filtering & Organization
 - **Status Filters**: View by owned, wishlist, playing, or completed
@@ -312,16 +397,31 @@ MAIL_PASSWORD=your_smtp_password
 
 ## 🧪 Testing
 
+The application includes comprehensive test coverage for all gaming session functionality:
+
 ```bash
 # Run all tests
 php artisan test
 
-# Run specific test suite
-php artisan test --testsuite=Feature
+# Run specific test suites
+php artisan test --testsuite=Feature  # Integration tests
+php artisan test --testsuite=Unit     # Unit tests
+
+# Run gaming session specific tests
+php artisan test tests/Unit/GamingSessionTest.php
+php artisan test tests/Unit/GamingSessionInvitationTest.php
+php artisan test tests/Unit/GamingSessionParticipantTest.php
 
 # Run with coverage
 php artisan test --coverage
 ```
+
+### Test Coverage
+- **Unit Tests**: 55+ tests covering all gaming session models
+- **Model Relationships**: Comprehensive testing of Eloquent relationships
+- **Business Logic**: Testing for session capacity, invitations, and participation
+- **Authorization**: Policy testing for session management permissions
+- **Validation**: Form validation and data integrity testing
 
 ## 🛠 Development
 
@@ -371,6 +471,45 @@ php artisan test --coverage
 - `hours_played`: Time invested
 - `purchase_info`: Date and price paid
 
+### Gaming Sessions Tables
+
+#### gaming_sessions
+- `id`: Primary key
+- `host_user_id`: Foreign key to users (session host)
+- `title`: Session title
+- `description`: Optional session description
+- `game_name`: Name of the game to be played
+- `game_data`: JSON field for IGDB game metadata
+- `platform`: Gaming platform for the session
+- `scheduled_at`: Date and time of the session
+- `max_participants`: Maximum number of participants
+- `status`: Session status (scheduled, active, completed, cancelled)
+- `privacy`: Privacy setting (public, friends_only, invite_only)
+- `requirements`: Optional session requirements/notes
+- `timestamps`: Created and updated timestamps
+
+#### gaming_session_invitations
+- `id`: Primary key
+- `gaming_session_id`: Foreign key to gaming_sessions
+- `invited_user_id`: Foreign key to users (nullable for group invitations)
+- `invited_group_id`: Foreign key to groups (nullable for user invitations)
+- `invited_by_user_id`: Foreign key to users (invitation sender)
+- `status`: Invitation status (pending, accepted, declined)
+- `message`: Optional invitation message
+- `responded_at`: Timestamp when invitation was responded to
+- `timestamps`: Created and updated timestamps
+
+#### gaming_session_participants
+- `id`: Primary key
+- `gaming_session_id`: Foreign key to gaming_sessions
+- `user_id`: Foreign key to users
+- `status`: Participation status (joined, left, kicked)
+- `joined_at`: Timestamp when user joined
+- `left_at`: Timestamp when user left (nullable)
+- `notes`: Optional participant or host notes
+- `timestamps`: Created and updated timestamps
+- **Unique Constraint**: (`gaming_session_id`, `user_id`)
+
 ## 🤝 Contributing
 
 1. **Fork the Repository**
@@ -404,13 +543,25 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔮 Roadmap
 
-- **Social Features**: Friend systems and game sharing
+### Immediate Improvements
+- **Enhanced Notifications**: Real-time browser notifications
+- **Session Calendar**: Calendar view for gaming sessions
+- **Advanced Filtering**: Enhanced session discovery filters
+- **Group Session Management**: Bulk invitation improvements
+
+### Medium-term Goals
+- **Social Features**: Enhanced friend systems and game sharing
 - **Achievements**: Track gaming achievements across platforms
 - **Statistics**: Advanced analytics and gaming insights
-- **API**: RESTful API for mobile app development
-- **Import/Export**: Bulk import from Steam, PSN, etc.
-- **Recommendations**: Game recommendation engine
-- **Reviews**: Community game reviews and ratings
+- **Mobile App**: Native mobile application with API
+- **Voice Integration**: Discord/TeamSpeak integration
+
+### Long-term Vision
+- **AI Recommendations**: Game and session recommendation engine
+- **Community Features**: Forums, reviews, and user-generated content
+- **Tournament System**: Organized gaming tournaments and competitions
+- **Streaming Integration**: Twitch/YouTube live streaming features
+- **Cross-Platform Sync**: Import from Steam, PSN, Xbox Live, etc.
 
 ---
 
