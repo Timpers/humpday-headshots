@@ -23,6 +23,14 @@ A comprehensive gaming profile and library management platform built with Larave
 - **Multi-Platform Games**: Track the same game across different platforms
 - **Advanced Filtering**: Filter by status, platform, completion, and favorites
 
+### 👥 Social Features
+- **User Discovery**: Search and browse users by name, email, or gamertags
+- **Connection System**: Send and manage friend requests
+- **Friend Management**: Accept, decline, or block connection requests
+- **Gamertag Browsing**: Discover gamers by platform and gaming profiles
+- **Social Hub**: Dashboard with connection stats and recent activity
+- **Real-time Notifications**: Badge indicators for pending friend requests
+
 ### 🔐 Authentication System
 - **Secure Registration & Login**: Full authentication flow
 - **Protected Routes**: Secure access to personal data
@@ -207,6 +215,14 @@ routes/
 2. **Select Game**: Click on a game from search results
 3. **Add Details**: Specify your platform, status, and personal info
 4. **Track Progress**: Update hours played, completion status, ratings
+
+### Social Features
+1. **Browse Users**: Navigate to Social → Browse to see all users with public gamertags
+2. **Search**: Use Social → Search to find specific users or gamertags
+3. **Connect**: Send connection requests to other gamers
+4. **Manage Requests**: Accept or decline incoming connection requests
+5. **Friend Management**: View friends, remove connections, or block users
+6. **Platform Filtering**: Filter users by specific gaming platforms
 
 ### Filtering & Organization
 - **Status Filters**: View by owned, wishlist, playing, or completed

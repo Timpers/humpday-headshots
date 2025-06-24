@@ -69,3 +69,22 @@ Route::middleware('auth')->group(function () {
     Route::resource('games', \App\Http\Controllers\GameController::class);
     Route::post('games/search', [\App\Http\Controllers\GameController::class, 'search'])->name('games.search');
 });
+
+// Social/Connection Routes (protected)
+Route::middleware('auth')->group(function () {
+    // Social hub pages
+    Route::get('/social', [\App\Http\Controllers\SocialController::class, 'index'])->name('social.index');
+    Route::get('/social/search', [\App\Http\Controllers\SocialController::class, 'search'])->name('social.search');
+    Route::post('/social/search', [\App\Http\Controllers\SocialController::class, 'search']);
+    Route::get('/social/browse', [\App\Http\Controllers\SocialController::class, 'browse'])->name('social.browse');
+    Route::get('/social/friends', [\App\Http\Controllers\SocialController::class, 'friends'])->name('social.friends');
+    Route::get('/social/requests', [\App\Http\Controllers\SocialController::class, 'requests'])->name('social.requests');
+    
+    // Connection management
+    Route::post('/connections', [\App\Http\Controllers\UserConnectionController::class, 'store'])->name('connections.store');
+    Route::patch('/connections/{connection}/accept', [\App\Http\Controllers\UserConnectionController::class, 'accept'])->name('connections.accept');
+    Route::patch('/connections/{connection}/decline', [\App\Http\Controllers\UserConnectionController::class, 'decline'])->name('connections.decline');
+    Route::delete('/connections/{connection}/cancel', [\App\Http\Controllers\UserConnectionController::class, 'cancel'])->name('connections.cancel');
+    Route::patch('/connections/{connection}/block', [\App\Http\Controllers\UserConnectionController::class, 'block'])->name('connections.block');
+    Route::delete('/connections/{connection}', [\App\Http\Controllers\UserConnectionController::class, 'destroy'])->name('connections.destroy');
+});

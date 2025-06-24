@@ -8,9 +8,7 @@
                     <a href="{{ route('welcome') }}" class="text-xl font-semibold text-gray-800 dark:text-gray-200">
                         🎮 {{ config('app.name', 'Laravel') }}
                     </a>
-                </div>
-
-                <!-- Navigation Links -->
+                </div>                <!-- Navigation Links -->
                 @auth                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
                         <a href="{{ route('dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('dashboard') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
                             Dashboard
@@ -18,8 +16,18 @@
                         <a href="{{ route('games.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('games.*') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
                             Games
                         </a>
-                        <a href="{{ route('gamertag.test') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('gamertag.test') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
-                            Browse Gamertags
+                        <a href="{{ route('gamertags.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('gamertags.*') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
+                            Gamertags
+                        </a>                        <a href="{{ route('social.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('social.*') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
+                            Social
+                            @php
+                                $pendingCount = \App\Models\UserConnection::where('recipient_id', Auth::id())
+                                    ->where('status', \App\Models\UserConnection::STATUS_PENDING)
+                                    ->count();
+                            @endphp
+                            @if($pendingCount > 0)
+                                <span class="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">{{ $pendingCount }}</span>
+                            @endif
                         </a>
                     </div>
                 @endauth

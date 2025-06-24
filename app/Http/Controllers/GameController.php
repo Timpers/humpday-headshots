@@ -167,8 +167,6 @@ class GameController extends Controller
      */
     public function show(Game $game)
     {
-        $this->authorize('view', $game);
-        
         return view('games.show', compact('game'));
     }
 
@@ -177,8 +175,6 @@ class GameController extends Controller
      */
     public function edit(Game $game)
     {
-        $this->authorize('update', $game);
-        
         return view('games.edit', compact('game'));
     }
 
@@ -187,8 +183,6 @@ class GameController extends Controller
      */
     public function update(Request $request, Game $game)
     {
-        $this->authorize('update', $game);
-
         $request->validate([
             'platform' => 'required|string|in:' . implode(',', array_keys(Game::PLATFORMS)),
             'status' => 'required|string|in:' . implode(',', array_keys(Game::STATUSES)),
@@ -222,8 +216,6 @@ class GameController extends Controller
      */
     public function destroy(Game $game)
     {
-        $this->authorize('delete', $game);
-        
         $game->delete();
 
         return redirect()->route('games.index')

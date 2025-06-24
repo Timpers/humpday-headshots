@@ -80,21 +80,104 @@ class User extends Authenticatable
     }
 
     /**
-     * Get gamertag for a specific platform.
+     * Get connection requests sent by this user.
      */
-    public function getGamertagForPlatform(string $platform): ?Gamertag
+    public function sentConnectionRequests(): HasMany
     {
-        return $this->gamertags()->where('platform', $platform)->first();
+        return $this->hasMany(UserConnection::class, 'requester_id');
     }
 
     /**
-     * Get primary gamertag for a specific platform.
+     * Get connection requests received by this user.
      */
-    public function getPrimaryGamertagForPlatform(string $platform): ?Gamertag
+    public function receivedConnectionRequests(): HasMany
     {
-        return $this->gamertags()
-            ->where('platform', $platform)
-            ->where('is_primary', true)
+        return $this->hasMany(UserConnection::class, 'recipient_id');
+    }
+
+    /**
+     * Get all connections (both sent and received).
+     */
+    public function connections()
+    {
+        return UserConnection::where(function ($query) {
+            $query->where('requester_id', $this->id)
+                  ->orWhere('recipient_id', $this->id);
+        });
+    }
+
+    /**
+     * Get accepted connections (friends).
+     */
+    public function friends()
+    {
+        return $this->connections()->accepted();
+    }
+
+    /**
+     * Get pending connection requests received.
+     */
+    public function pendingReceivedRequests()
+    {
+        return $this->receivedConnectionRequests()->pending();
+    }
+
+    /**
+     * Get pending connection requests sent.
+     */
+    public function pendingSentRequests()
+    {
+        return $this->sentConnectionRequests()->pending();
+    }
+
+    /**
+     * Check if this user is connected to another user.
+     */
+    public function isConnectedTo($userId)
+    {
+        return $this->connections()
+            ->accepted()
+            ->where(function ($query) use ($userId) {
+                $query->where('requester_id', $userId)
+                      ->orWhere('recipient_id', $userId);
+            })
+            ->exists();
+    }
+
+    /**
+     * Check if this user has a pending request with another user.
+     */
+    public function hasPendingRequestWith($userId)
+    {
+        return $this->connections()
+            ->pending()
+            ->where(function ($query) use ($userId) {
+                $query->where('requester_id', $userId)
+                      ->orWhere('recipient_id', $userId);
+            })
+            ->exists();
+    }
+
+    /**
+     * Get the connection status with another user.
+     */
+    public function getConnectionStatusWith($userId)
+    {
+        $connection = $this->connections()
+            ->where(function ($query) use ($userId) {
+                $query->where('requester_id', $userId)
+                      ->orWhere('recipient_id', $userId);
+            })
             ->first();
+
+        if (!$connection) {
+            return null;
+        }
+
+        return [
+            'status' => $connection->status,
+            'is_requester' => $connection->requester_id === $this->id,
+            'connection' => $connection,
+        ];
     }
 }
