@@ -284,6 +284,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('domContentLoaded event triggered');
     const searchInput = document.getElementById('game-search');
     const loading = document.getElementById('loading');
     const searchResults = document.getElementById('search-results');

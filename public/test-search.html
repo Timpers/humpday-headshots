@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test IGDB Search</title>
+    <meta name="csrf-token" content="test">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
+        .results { border: 1px solid #ccc; max-height: 300px; overflow-y: auto; }
+        .result-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .result-item:hover { background-color: #f5f5f5; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test IGDB Search</h1>
+        <input type="text" id="searchInput" placeholder="Type to search for games...">
+        <div id="results" class="results" style="display: none;"></div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const resultsDiv = document.getElementById('results');
+            const statusDiv = document.getElementById('status');
+            
+            let searchTimeout;
+            
+            searchInput.addEventListener('input', function() {
+                console.log('Input changed:', this.value);
+                const query = this.value.trim();
+                
+                if (query.length < 2) {
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    searchGames(query);
+                }, 300);
+            });
+            
+            function searchGames(query) {
+                statusDiv.innerHTML = '<span class="success">Searching...</span>';
+                
+                fetch(`/search-games?query=${encodeURIComponent(query)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(games => {
+                    statusDiv.innerHTML = `<span class="success">Found ${games.length} games</span>`;
+                    resultsDiv.innerHTML = '';
+                    
+                    if (games.error) {
+                        resultsDiv.innerHTML = `<div class="result-item error">${games.error}</div>`;
+                    } else if (games.length === 0) {
+                        resultsDiv.innerHTML = '<div class="result-item">No games found</div>';
+                    } else {
+                        games.forEach(game => {
+                            const gameItem = document.createElement('div');
+                            gameItem.className = 'result-item';
+                            gameItem.innerHTML = `
+                                <strong>${game.name}</strong><br>
+                                <small>ID: ${game.id}</small><br>
+                                ${game.platforms && game.platforms.length > 0 ? `<small>Platforms: ${game.platforms.join(', ')}</small>` : '<small>No platforms listed</small>'}
+                                ${game.cover_url ? `<br><img src="${game.cover_url}" style="max-width: 50px; height: auto;">` : ''}
+                            `;
+                            resultsDiv.appendChild(gameItem);
+                        });
+                    }
+                    
+                    resultsDiv.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    statusDiv.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+                    resultsDiv.innerHTML = `<div class="result-item error">Error searching games: ${error.message}</div>`;
+                    resultsDiv.style.display = 'block';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

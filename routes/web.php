@@ -105,4 +105,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/group-invitations/{invitation}/decline', [\App\Http\Controllers\GroupInvitationController::class, 'decline'])->name('group-invitations.decline');
     Route::delete('/group-invitations/{invitation}/cancel', [\App\Http\Controllers\GroupInvitationController::class, 'cancel'])->name('group-invitations.cancel');
     Route::post('/group-invitations/bulk-action', [\App\Http\Controllers\GroupInvitationController::class, 'bulkAction'])->name('group-invitations.bulk-action');
+
+    // Gaming Sessions
+    Route::resource('gaming-sessions', \App\Http\Controllers\GamingSessionController::class);
+    Route::post('/gaming-sessions/{gamingSession}/join', [\App\Http\Controllers\GamingSessionController::class, 'join'])->name('gaming-sessions.join');
+    Route::delete('/gaming-sessions/{gamingSession}/leave', [\App\Http\Controllers\GamingSessionController::class, 'leave'])->name('gaming-sessions.leave');
+    Route::get('/search-games', [\App\Http\Controllers\GamingSessionController::class, 'searchGames'])->name('gaming-sessions.search-games');
+    Route::post('/gaming-session-invitations/{invitation}/respond', [\App\Http\Controllers\GamingSessionController::class, 'respondToInvitation'])->name('gaming-session-invitations.respond');
 });

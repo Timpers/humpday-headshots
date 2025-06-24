@@ -43,6 +43,17 @@
                                 <span class="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">{{ $pendingInvitations }}</span>
                             @endif
                         </a>
+                        <a href="{{ route('gaming-sessions.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('gaming-sessions.*') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
+                            Sessions
+                            @php
+                                $pendingSessionInvitations = \App\Models\GamingSessionInvitation::where('invited_user_id', Auth::id())
+                                    ->where('status', 'pending')
+                                    ->count();
+                            @endphp
+                            @if($pendingSessionInvitations > 0)
+                                <span class="ml-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">{{ $pendingSessionInvitations }}</span>
+                            @endif
+                        </a>
                     </div>
                 @endauth
             </div>
@@ -101,6 +112,9 @@
                 </a>
                 <a href="{{ route('groups.my-invitations') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('groups.my-invitations') ? 'border-indigo-500 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300' }} text-base font-medium">
                     Invitations
+                </a>
+                <a href="{{ route('gaming-sessions.index') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('gaming-sessions.*') ? 'border-indigo-500 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300' }} text-base font-medium">
+                    Sessions
                 </a>
             </div>
         </div>

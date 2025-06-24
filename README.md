@@ -31,6 +31,22 @@ A comprehensive gaming profile and library management platform built with Larave
 - **Social Hub**: Dashboard with connection stats and recent activity
 - **Real-time Notifications**: Badge indicators for pending friend requests
 
+### 🎲 Group System
+- **Group Creation**: Create public or private gaming groups
+- **Group Management**: Invite members, manage roles, and moderate discussions
+- **Group Discovery**: Browse and search for gaming groups
+- **Group Invitations**: Send and manage group invitations
+- **Membership Management**: Join, leave, and manage group memberships
+
+### ⏰ Gaming Sessions
+- **Session Scheduling**: Create gaming sessions with date, time, and game selection
+- **IGDB Game Search**: Real-time game search and selection with cover art
+- **Multi-Level Invitations**: Invite individual friends or entire groups
+- **Session Management**: Join, leave, and manage participant lists
+- **Privacy Controls**: Public, friends-only, or invite-only sessions
+- **Session Discovery**: Browse public sessions and upcoming events
+- **Real-time Updates**: Session status tracking and notifications
+
 ### 🔐 Authentication System
 - **Secure Registration & Login**: Full authentication flow
 - **Protected Routes**: Secure access to personal data
@@ -216,6 +232,14 @@ routes/
 3. **Add Details**: Specify your platform, status, and personal info
 4. **Track Progress**: Update hours played, completion status, ratings
 
+### Managing Gaming Sessions
+1. **Create Session**: Navigate to Sessions → Create Session
+2. **Select Game**: Use IGDB search to find and select your game
+3. **Set Details**: Choose date/time, max participants, and privacy level
+4. **Send Invitations**: Invite specific friends or entire groups
+5. **Manage Sessions**: Join, leave, or cancel sessions as needed
+6. **Browse Sessions**: Discover public sessions or view your upcoming events
+
 ### Social Features
 1. **Browse Users**: Navigate to Social → Browse to see all users with public gamertags
 2. **Search**: Use Social → Search to find specific users or gamertags
@@ -223,6 +247,20 @@ routes/
 4. **Manage Requests**: Accept or decline incoming connection requests
 5. **Friend Management**: View friends, remove connections, or block users
 6. **Platform Filtering**: Filter users by specific gaming platforms
+
+### Group System
+1. **Create Group**: Navigate to Groups → Create
+2. **Set Group Type**: Choose public or private
+3. **Invite Members**: Add friends to the group
+4. **Manage Roles**: Assign roles and permissions
+5. **Moderate Discussions**: Manage group content and discussions
+
+### Gaming Sessions
+1. **Schedule Session**: Navigate to Sessions → Schedule
+2. **Select Game**: Use IGDB search to find and select a game
+3. **Set Date & Time**: Choose when to play
+4. **Invite Friends/Groups**: Send invites to friends or entire groups
+5. **Manage Session**: Start, join, or leave sessions as needed
 
 ### Filtering & Organization
 - **Status Filters**: View by owned, wishlist, playing, or completed

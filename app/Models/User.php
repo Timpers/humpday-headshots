@@ -117,6 +117,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Get friend users (actual User models).
+     */
+    public function friendUsers()
+    {
+        $friendConnections = $this->friends()->get();
+        $friendIds = $friendConnections->map(function ($connection) {
+            return $connection->requester_id === $this->id 
+                ? $connection->recipient_id 
+                : $connection->requester_id;
+        });
+
+        return User::whereIn('id', $friendIds)->get();
+    }
+
+    /**
      * Get pending connection requests received.
      */
     public function pendingReceivedRequests()
@@ -282,5 +297,56 @@ class User extends Authenticatable
                 ? $connection->recipient_id 
                 : $connection->requester_id;
         })->toArray();
+    }
+
+    /**
+     * Get gaming sessions hosted by this user.
+     */
+    public function hostedGamingSessions(): HasMany
+    {
+        return $this->hasMany(GamingSession::class, 'host_user_id');
+    }
+
+    /**
+     * Get gaming sessions this user is participating in.
+     */
+    public function gamingSessionParticipations(): HasMany
+    {
+        return $this->hasMany(GamingSessionParticipant::class);
+    }
+
+    /**
+     * Get gaming sessions this user is participating in (active).
+     */
+    public function activeGamingSessions(): BelongsToMany
+    {
+        return $this->belongsToMany(GamingSession::class, 'gaming_session_participants', 'user_id', 'gaming_session_id')
+                    ->withPivot(['status', 'joined_at', 'left_at', 'notes'])
+                    ->withTimestamps()
+                    ->wherePivot('status', GamingSessionParticipant::STATUS_JOINED);
+    }
+
+    /**
+     * Get gaming session invitations sent by this user.
+     */
+    public function sentGamingSessionInvitations(): HasMany
+    {
+        return $this->hasMany(GamingSessionInvitation::class, 'invited_by_user_id');
+    }
+
+    /**
+     * Get gaming session invitations received by this user.
+     */
+    public function receivedGamingSessionInvitations(): HasMany
+    {
+        return $this->hasMany(GamingSessionInvitation::class, 'invited_user_id');
+    }
+
+    /**
+     * Get pending gaming session invitations for this user.
+     */
+    public function pendingGamingSessionInvitations(): HasMany
+    {
+        return $this->receivedGamingSessionInvitations()->where('status', GamingSessionInvitation::STATUS_PENDING);
     }
 }
