@@ -239,6 +239,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 function selectAllPending() {
     document.querySelectorAll('.pending-invitation').forEach(checkbox => {
@@ -263,4 +264,5 @@ function confirmBulkAction(action) {
     return confirm(`Are you sure you want to ${actionText} ${selectedInvitations.length} invitation(s)?`);
 }
 </script>
+@endpush
 @endsection

@@ -199,6 +199,7 @@
 </div>
 
 {{-- JavaScript for character counter and form validation --}}
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const messageTextarea = document.getElementById('message');
@@ -261,4 +262,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+@endpush
 @endsection

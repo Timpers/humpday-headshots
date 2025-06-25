@@ -106,6 +106,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 function openModal(title, message, confirmAction) {
     document.getElementById('modalTitle').textContent = title;
@@ -163,4 +164,5 @@ document.addEventListener('keydown', function(e) {
     }
 });
 </script>
+@endpush
 @endsection

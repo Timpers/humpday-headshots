@@ -181,6 +181,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 function confirmDelete() {
     if (confirm('Are you sure you want to delete this gamertag? This action cannot be undone.')) {
@@ -188,4 +189,5 @@ function confirmDelete() {
     }
 }
 </script>
+@endpush
 @endsection

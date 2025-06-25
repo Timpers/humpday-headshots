@@ -85,6 +85,7 @@
     @endif
 </div>
 
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Character counter for message textarea
@@ -106,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+@endpush
 
 <style>
 .connection-form-container form {

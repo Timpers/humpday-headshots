@@ -192,6 +192,7 @@
     </form>
 </div>
 
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const gameSearch = document.getElementById('game_search');
@@ -355,5 +356,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+@endpush
 
 @endsection

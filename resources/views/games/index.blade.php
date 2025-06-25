@@ -221,6 +221,7 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const statusFilter = document.getElementById('status-filter');
@@ -250,4 +251,5 @@ document.addEventListener('DOMContentLoaded', function() {
     platformFilter.addEventListener('change', updateFilters);
 });
 </script>
+@endpush
 @endsection

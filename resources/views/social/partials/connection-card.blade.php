@@ -159,6 +159,7 @@
     @endif
 </div>
 
+@push('scripts')
 <script>
 function toggleDropdown(connectionId) {
     const dropdown = document.getElementById(`dropdown-${connectionId}`);
@@ -184,3 +185,4 @@ document.addEventListener('click', function(e) {
     }
 });
 </script>
+@endpush
