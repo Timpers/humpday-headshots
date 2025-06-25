@@ -198,6 +198,9 @@
                 </dl>
             </div>
 
+            <!-- Messages Widget -->
+            @include('gaming-sessions.partials.messages-widget', ['session' => $gamingSession])
+
             <!-- Invitations -->
             @if($gamingSession->host_user_id === Auth::id() && $gamingSession->invitations->count() > 0)
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">

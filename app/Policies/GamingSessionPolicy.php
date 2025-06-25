@@ -92,4 +92,36 @@ class GamingSessionPolicy
         // Only the host can permanently delete their gaming session
         return $gamingSession->host_user_id === $user->id;
     }
+
+    /**
+     * Determine whether the user can view messages for this session.
+     */
+    public function viewMessages(User $user, GamingSession $gamingSession): bool
+    {
+        // Same rules as viewing the session itself
+        return $this->view($user, $gamingSession);
+    }
+
+    /**
+     * Determine whether the user can post messages to this session.
+     */
+    public function postMessage(User $user, GamingSession $gamingSession): bool
+    {
+        // Host can always post
+        if ($gamingSession->host_user_id === $user->id) {
+            return true;
+        }
+
+        // Participants can post messages
+        if ($gamingSession->participantUsers()->where('user_id', $user->id)->exists()) {
+            return true;
+        }
+
+        // For public sessions, users with view access can post
+        if ($gamingSession->privacy === 'public') {
+            return true;
+        }
+
+        return false;
+    }
 }

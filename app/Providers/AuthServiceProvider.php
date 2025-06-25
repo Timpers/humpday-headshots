@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\GamingSession;
+use App\Models\GamingSessionMessage;
 use App\Policies\GamingSessionPolicy;
+use App\Policies\GamingSessionMessagePolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -15,6 +17,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         GamingSession::class => GamingSessionPolicy::class,
+        GamingSessionMessage::class => GamingSessionMessagePolicy::class,
     ];
 
     /**

@@ -121,4 +121,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/gaming-sessions/{gamingSession}/leave', [\App\Http\Controllers\GamingSessionController::class, 'leave'])->name('gaming-sessions.leave');
     Route::get('/search-games', [\App\Http\Controllers\GamingSessionController::class, 'searchGames'])->name('gaming-sessions.search-games');
     Route::post('/gaming-sessions/invitations/{invitation}/respond', [\App\Http\Controllers\GamingSessionController::class, 'respondToInvitation'])->name('gaming-sessions.respond-invitation');
+    
+    // Gaming Session Messages
+    Route::get('/gaming-sessions/{session}/messages', [\App\Http\Controllers\GamingSessionMessageController::class, 'index'])->name('gaming-sessions.messages.index');
+    Route::post('/gaming-sessions/{session}/messages', [\App\Http\Controllers\GamingSessionMessageController::class, 'store'])->name('gaming-sessions.messages.store');
+    Route::put('/gaming-sessions/{session}/messages/{message}', [\App\Http\Controllers\GamingSessionMessageController::class, 'update'])->name('gaming-sessions.messages.update');
+    Route::delete('/gaming-sessions/{session}/messages/{message}', [\App\Http\Controllers\GamingSessionMessageController::class, 'destroy'])->name('gaming-sessions.messages.destroy');
+    Route::get('/gaming-sessions/{session}/messages/recent', [\App\Http\Controllers\GamingSessionMessageController::class, 'recent'])->name('gaming-sessions.messages.recent');
 });

@@ -103,6 +103,14 @@ class GamingSession extends Model
     }
 
     /**
+     * Get all messages for this session.
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(GamingSessionMessage::class)->with('user:id,name')->latest();
+    }
+
+    /**
      * Add a participant to this session.
      */
     public function addParticipant(User $user): bool
