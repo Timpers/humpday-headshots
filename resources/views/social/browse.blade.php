@@ -84,22 +84,26 @@
                         @endphp
 
                         @if($connectionStatus === null)
-                            <form action="{{ route('connections.store') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="recipient_id" value="{{ $user->id }}">
-                                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500">
-                                    Send Connection Request
-                                </button>
-                            </form>
+                            <div class="space-y-2">
+                                <form action="{{ route('user-connections.store') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="recipient_id" value="{{ $user->id }}">
+                                    <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500">
+                                        Send Connection Request
+                                    </button>
+                                </form>
+                                <a href="{{ route('user-connections.create', ['user_id' => $user->id]) }}" class="block w-full text-center px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 focus:ring-2 focus:ring-blue-500">
+                                    Add Personal Message
+                                </a>
+                            </div>
                         @elseif($connectionStatus['status'] === 'pending')
                             @if($connectionStatus['is_requester'])
                                 <div class="flex space-x-2">
                                     <span class="flex-1 text-center px-4 py-2 bg-yellow-100 text-yellow-800 rounded-md">
                                         Request Sent
                                     </span>
-                                    <form action="{{ route('connections.cancel', $connectionStatus['connection']) }}" method="POST">
+                                    <form action="{{ route('user-connections.cancel', $connectionStatus['connection']) }}" method="POST">
                                         @csrf
-                                        @method('DELETE')
                                         <button type="submit" class="px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700" title="Cancel Request">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -111,16 +115,14 @@
                                 <div class="space-y-2">
                                     <p class="text-sm text-gray-600 dark:text-gray-400 text-center">Connection request received</p>
                                     <div class="flex space-x-2">
-                                        <form action="{{ route('connections.accept', $connectionStatus['connection']) }}" method="POST" class="flex-1">
+                                        <form action="{{ route('user-connections.accept', $connectionStatus['connection']) }}" method="POST" class="flex-1">
                                             @csrf
-                                            @method('PATCH')
                                             <button type="submit" class="w-full px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
                                                 Accept
                                             </button>
                                         </form>
-                                        <form action="{{ route('connections.decline', $connectionStatus['connection']) }}" method="POST" class="flex-1">
+                                        <form action="{{ route('user-connections.decline', $connectionStatus['connection']) }}" method="POST" class="flex-1">
                                             @csrf
-                                            @method('PATCH')
                                             <button type="submit" class="w-full px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
                                                 Decline
                                             </button>
@@ -133,10 +135,10 @@
                                 <span class="flex-1 text-center px-4 py-2 bg-green-100 text-green-800 rounded-md">
                                     Connected
                                 </span>
-                                <form action="{{ route('connections.destroy', $connectionStatus['connection']) }}" method="POST">
+                                <form action="{{ route('user-connections.destroy', $connectionStatus['connection']) }}" method="POST">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700" title="Remove Connection" onclick="return confirm('Are you sure you want to remove this connection?')">
+                                    <button type="submit" class="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700" title="Remove Connection" onclick="return confirm('Are you sure you want to remove this connection?')">>
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                         </svg>
@@ -173,13 +175,15 @@
                     </svg>
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No users found</h3>
                     <p class="text-gray-600 dark:text-gray-400 mb-4">
-                        @if($platform)
-                            No users with public gamertags on {{ \App\Models\Gamertag::PLATFORMS[$platform] ?? ucfirst($platform) }}.
+                        @if(!empty($platform) && isset(\App\Models\Gamertag::PLATFORMS[$platform]))
+                            No users with public gamertags on {{ \App\Models\Gamertag::PLATFORMS[$platform] }}.
+                        @elseif(!empty($platform))
+                            No users with public gamertags on {{ ucfirst($platform) }}.
                         @else
                             No users with public gamertags found.
                         @endif
                     </p>
-                    @if($platform)
+                    @if(!empty($platform))
                         <a href="{{ route('social.browse') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                             Show All Platforms
                         </a>

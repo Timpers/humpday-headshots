@@ -13,35 +13,238 @@ class GamingSessionTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
+    public function test_gaming_session_belongs_to_host()
     {
-        parent::setUp();
+        $host = User::factory()->create();
+        $session = GamingSession::factory()->create(['host_user_id' => $host->id]);
+
+        $this->assertEquals($host->id, $session->host->id);
+        $this->assertEquals($host->name, $session->host->name);
     }
 
-    public function test_can_create_gaming_session()
+    public function test_gaming_session_has_fillable_attributes()
+    {
+        $fillable = [
+            'host_user_id',
+            'title',
+            'description',
+            'game_name',
+            'game_data',
+            'platform',
+            'scheduled_at',
+            'max_participants',
+            'status',
+            'privacy',
+            'requirements',
+        ];
+
+        $session = new GamingSession();
+        $this->assertEquals($fillable, $session->getFillable());
+    }
+
+    public function test_gaming_session_casts_attributes()
+    {
+        $session = GamingSession::factory()->create([
+            'game_data' => ['title' => 'Test Game'],
+            'scheduled_at' => now(),
+            'privacy' => GamingSession::PRIVACY_PUBLIC,
+            'max_participants' => 10,
+            'status' => GamingSession::STATUS_SCHEDULED,
+        ]);
+
+        $this->assertIsArray($session->game_data);
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $session->scheduled_at);
+        $this->assertIsInt($session->max_participants);
+        $this->assertIsString($session->privacy);
+        $this->assertIsString($session->status);
+    }
+    public function test_gaming_session_can_check_if_past()
+    {
+        $pastSession = GamingSession::factory()->create([
+            'scheduled_at' => now()->subHour(),
+        ]);
+
+        $futureSession = GamingSession::factory()->create([
+            'scheduled_at' => now()->addHour(),
+        ]);
+
+        $this->assertTrue($pastSession->isPast());
+        $this->assertFalse($futureSession->isPast());
+    }
+
+    public function test_gaming_session_can_check_if_upcoming()
+    {
+        $pastSession = GamingSession::factory()->create([
+            'scheduled_at' => now()->subHour(),
+        ]);
+
+        $futureSession = GamingSession::factory()->create([
+            'scheduled_at' => now()->addHour(),
+        ]);
+
+        $this->assertFalse($pastSession->isUpcoming());
+        $this->assertTrue($futureSession->isUpcoming());
+    }
+
+    public function test_gaming_session_can_check_if_soon()
+    {
+        $soonSession = GamingSession::factory()->create([
+            'scheduled_at' => now()->addMinutes(30),
+        ]);
+
+        $laterSession = GamingSession::factory()->create([
+            'scheduled_at' => now()->addHours(2),
+        ]);
+
+        $this->assertTrue($soonSession->isSoon());
+        $this->assertFalse($laterSession->isSoon());
+    }
+
+    public function test_host_can_always_join_their_own_session()
+    {
+        $host = User::factory()->create();
+        $session = GamingSession::factory()->create([
+            'host_user_id' => $host->id,
+            'privacy' => GamingSession::PRIVACY_INVITE_ONLY,
+            'max_participants' => 1,
+        ]);
+
+        $this->assertTrue($session->canUserJoin($host));
+    }
+
+    public function test_user_cannot_join_cancelled_session()
     {
         $user = User::factory()->create();
         $session = GamingSession::factory()->create([
-            'host_user_id' => $user->id,
-            'title' => 'Test Gaming Session',
-            'game_name' => 'Test Game',
+            'status' => GamingSession::STATUS_CANCELLED,
+            'privacy' => GamingSession::PRIVACY_PUBLIC,
         ]);
 
-        $this->assertDatabaseHas('gaming_sessions', [
-            'id' => $session->id,
-            'host_user_id' => $user->id,
-            'title' => 'Test Gaming Session',
-            'game_name' => 'Test Game',
-        ]);
+        $this->assertFalse($session->canUserJoin($user));
     }
 
-    public function test_gaming_session_belongs_to_host()
+    public function test_user_cannot_join_past_session()
     {
         $user = User::factory()->create();
-        $session = GamingSession::factory()->create(['host_user_id' => $user->id]);
+        $session = GamingSession::factory()->create([
+            'scheduled_at' => now()->subHour(),
+            'privacy' => GamingSession::PRIVACY_PUBLIC,
+        ]);
 
-        $this->assertEquals($user->id, $session->host->id);
-        $this->assertEquals($user->name, $session->host->name);
+        $this->assertFalse($session->canUserJoin($user));
+    }
+
+    public function test_user_can_join_invite_only_session_with_accepted_invitation()
+    {
+        $user = User::factory()->create();
+        $session = GamingSession::factory()->create([
+            'privacy' => GamingSession::PRIVACY_INVITE_ONLY,
+        ]);
+
+        GamingSessionInvitation::factory()->create([
+            'gaming_session_id' => $session->id,
+            'invited_user_id' => $user->id,
+            'status' => GamingSessionInvitation::STATUS_ACCEPTED,
+        ]);
+
+        $this->assertTrue($session->canUserJoin($user));
+    }
+
+    public function test_user_cannot_join_invite_only_session_without_invitation()
+    {
+        $user = User::factory()->create();
+        $session = GamingSession::factory()->create([
+            'privacy' => GamingSession::PRIVACY_INVITE_ONLY,
+        ]);
+
+        $this->assertFalse($session->canUserJoin($user));
+    }
+
+    public function test_gaming_session_scope_for_user()
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $hostedSession = GamingSession::factory()->create(['host_user_id' => $user->id]);
+        $participatedSession = GamingSession::factory()->create(['host_user_id' => $otherUser->id]);
+        $unrelatedSession = GamingSession::factory()->create(['host_user_id' => $otherUser->id]);
+
+        GamingSessionParticipant::factory()->create([
+            'gaming_session_id' => $participatedSession->id,
+            'user_id' => $user->id,
+            'status' => GamingSessionParticipant::STATUS_JOINED,
+        ]);
+
+        $userSessions = GamingSession::forUser($user)->get();
+
+        $this->assertEquals(2, $userSessions->count());
+        $this->assertTrue($userSessions->contains('id', $hostedSession->id));
+        $this->assertTrue($userSessions->contains('id', $participatedSession->id));
+        $this->assertFalse($userSessions->contains('id', $unrelatedSession->id));
+    }
+
+    public function test_gaming_session_scope_public()
+    {
+        GamingSession::factory()->create(['privacy' => GamingSession::PRIVACY_PUBLIC]);
+        GamingSession::factory()->create(['privacy' => GamingSession::PRIVACY_FRIENDS_ONLY]);
+        GamingSession::factory()->create(['privacy' => GamingSession::PRIVACY_INVITE_ONLY]);
+
+        $publicSessions = GamingSession::public()->get();
+
+        $this->assertEquals(1, $publicSessions->count());
+        $this->assertEquals(GamingSession::PRIVACY_PUBLIC, $publicSessions->first()->privacy);
+    }
+
+    public function test_gaming_session_game_cover_url_attribute()
+    {
+        $sessionWithCover = GamingSession::factory()->create([
+            'game_data' => [
+                'cover' => [
+                    'url' => '//example.com/cover.jpg'
+                ]
+            ]
+        ]);
+
+        $sessionWithoutCover = GamingSession::factory()->create([
+            'game_data' => null
+        ]);
+
+        $this->assertEquals('https://example.com/cover.jpg', $sessionWithCover->game_cover_url);
+        $this->assertNull($sessionWithoutCover->game_cover_url);
+    }
+
+    public function test_gaming_session_pending_invitations_relationship()
+    {
+        $session = GamingSession::factory()->create();
+
+        GamingSessionInvitation::factory()->create([
+            'gaming_session_id' => $session->id,
+            'status' => GamingSessionInvitation::STATUS_PENDING,
+        ]);
+
+        GamingSessionInvitation::factory()->create([
+            'gaming_session_id' => $session->id,
+            'status' => GamingSessionInvitation::STATUS_ACCEPTED,
+        ]);
+
+        $this->assertEquals(1, $session->pendingInvitations->count());
+    }
+
+    public function test_gaming_session_accepted_invitations_relationship()
+    {
+        $session = GamingSession::factory()->create();
+
+        GamingSessionInvitation::factory()->create([
+            'gaming_session_id' => $session->id,
+            'status' => GamingSessionInvitation::STATUS_PENDING,
+        ]);
+
+        GamingSessionInvitation::factory()->create([
+            'gaming_session_id' => $session->id,
+            'status' => GamingSessionInvitation::STATUS_ACCEPTED,
+        ]);
+
+        $this->assertEquals(1, $session->acceptedInvitations->count());
     }
 
     public function test_gaming_session_has_many_invitations()
@@ -70,13 +273,13 @@ class GamingSessionTest extends TestCase
     public function test_gaming_session_active_participants_scope()
     {
         $session = GamingSession::factory()->create();
-        
+
         // Create joined participants
         GamingSessionParticipant::factory()->count(2)->create([
             'gaming_session_id' => $session->id,
             'status' => GamingSessionParticipant::STATUS_JOINED,
         ]);
-        
+
         // Create left participants
         GamingSessionParticipant::factory()->count(1)->create([
             'gaming_session_id' => $session->id,
@@ -89,7 +292,7 @@ class GamingSessionTest extends TestCase
     public function test_gaming_session_is_full_when_at_max_participants()
     {
         $session = GamingSession::factory()->create(['max_participants' => 2]);
-        
+
         GamingSessionParticipant::factory()->count(2)->create([
             'gaming_session_id' => $session->id,
             'status' => GamingSessionParticipant::STATUS_JOINED,
@@ -101,7 +304,7 @@ class GamingSessionTest extends TestCase
     public function test_gaming_session_is_not_full_when_below_max_participants()
     {
         $session = GamingSession::factory()->create(['max_participants' => 3]);
-        
+
         GamingSessionParticipant::factory()->count(2)->create([
             'gaming_session_id' => $session->id,
             'status' => GamingSessionParticipant::STATUS_JOINED,
@@ -113,7 +316,7 @@ class GamingSessionTest extends TestCase
     public function test_gaming_session_is_not_full_when_max_participants_is_large()
     {
         $session = GamingSession::factory()->create(['max_participants' => 100]);
-        
+
         GamingSessionParticipant::factory()->count(10)->create([
             'gaming_session_id' => $session->id,
             'status' => GamingSessionParticipant::STATUS_JOINED,
@@ -167,7 +370,7 @@ class GamingSessionTest extends TestCase
 
         $this->assertTrue($result1);
         $this->assertFalse($result2);
-        
+
         // Should only have one participant record
         $this->assertEquals(1, GamingSessionParticipant::where([
             'gaming_session_id' => $session->id,
@@ -182,7 +385,7 @@ class GamingSessionTest extends TestCase
 
         // First join
         $session->addParticipant($user);
-        
+
         // Then leave
         $result = $session->removeParticipant($user);
 

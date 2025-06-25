@@ -276,4 +276,260 @@ class GamingSessionInvitationTest extends TestCase
         $this->assertEquals('accepted', GamingSessionInvitation::STATUS_ACCEPTED);
         $this->assertEquals('declined', GamingSessionInvitation::STATUS_DECLINED);
     }
+
+    public function test_invitation_has_fillable_attributes()
+    {
+        $fillable = [
+            'gaming_session_id',
+            'invited_user_id',
+            'invited_group_id',
+            'invited_by_user_id',
+            'status',
+            'message',
+            'responded_at',
+        ];
+
+        $invitation = new GamingSessionInvitation();
+        $this->assertEquals($fillable, $invitation->getFillable());
+    }
+
+    public function test_invitation_casts_attributes()
+    {
+        $invitation = GamingSessionInvitation::factory()->create([
+            'responded_at' => '2023-01-15 10:30:00',
+        ]);
+
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $invitation->responded_at);
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $invitation->created_at);
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $invitation->updated_at);
+    }
+
+    public function test_invitation_belongs_to_invited_group()
+    {
+        $group = \App\Models\Group::factory()->create();
+        $invitation = GamingSessionInvitation::factory()->create([
+            'invited_group_id' => $group->id,
+            'invited_user_id' => null, // Group invitation, not user
+        ]);
+
+        $this->assertEquals($group->id, $invitation->invitedGroup->id);
+        $this->assertEquals($group->name, $invitation->invitedGroup->name);
+    }
+
+    public function test_is_user_invitation_method()
+    {
+        $userInvitation = GamingSessionInvitation::factory()->create([
+            'invited_user_id' => User::factory()->create()->id,
+            'invited_group_id' => null,
+        ]);
+
+        $groupInvitation = GamingSessionInvitation::factory()->create([
+            'invited_user_id' => null,
+            'invited_group_id' => \App\Models\Group::factory()->create()->id,
+        ]);
+
+        $this->assertTrue($userInvitation->isUserInvitation());
+        $this->assertFalse($groupInvitation->isUserInvitation());
+    }
+
+    public function test_is_group_invitation_method()
+    {
+        $userInvitation = GamingSessionInvitation::factory()->create([
+            'invited_user_id' => User::factory()->create()->id,
+            'invited_group_id' => null,
+        ]);
+
+        $groupInvitation = GamingSessionInvitation::factory()->create([
+            'invited_user_id' => null,
+            'invited_group_id' => \App\Models\Group::factory()->create()->id,
+        ]);
+
+        $this->assertFalse($userInvitation->isGroupInvitation());
+        $this->assertTrue($groupInvitation->isGroupInvitation());
+    }
+
+    public function test_user_invitations_scope()
+    {
+        $user = User::factory()->create();
+        $group = \App\Models\Group::factory()->create();
+
+        $userInvitation = GamingSessionInvitation::factory()->create([
+            'invited_user_id' => $user->id,
+            'invited_group_id' => null,
+        ]);
+
+        $groupInvitation = GamingSessionInvitation::factory()->create([
+            'invited_user_id' => null,
+            'invited_group_id' => $group->id,
+        ]);
+
+        $userInvitations = GamingSessionInvitation::userInvitations()->get();
+
+        $this->assertEquals(1, $userInvitations->count());
+        $this->assertTrue($userInvitations->contains('id', $userInvitation->id));
+        $this->assertFalse($userInvitations->contains('id', $groupInvitation->id));
+        $this->assertTrue($userInvitations->every(fn($invitation) => $invitation->isUserInvitation()));
+    }
+
+    public function test_group_invitations_scope()
+    {
+        $user = User::factory()->create();
+        $group = \App\Models\Group::factory()->create();
+
+        $userInvitation = GamingSessionInvitation::factory()->create([
+            'invited_user_id' => $user->id,
+            'invited_group_id' => null,
+        ]);
+
+        $groupInvitation = GamingSessionInvitation::factory()->create([
+            'invited_user_id' => null,
+            'invited_group_id' => $group->id,
+        ]);
+
+        $groupInvitations = GamingSessionInvitation::groupInvitations()->get();
+
+        $this->assertEquals(1, $groupInvitations->count());
+        $this->assertTrue($groupInvitations->contains('id', $groupInvitation->id));
+        $this->assertFalse($groupInvitations->contains('id', $userInvitation->id));
+        $this->assertTrue($groupInvitations->every(fn($invitation) => $invitation->isGroupInvitation()));
+    }
+
+    public function test_accept_user_invitation_creates_participant()
+    {
+        $session = GamingSession::factory()->create();
+        $user = User::factory()->create();
+        
+        $invitation = GamingSessionInvitation::factory()->pending()->create([
+            'gaming_session_id' => $session->id,
+            'invited_user_id' => $user->id,
+            'invited_group_id' => null,
+        ]);
+
+        // Ensure no participant exists initially
+        $this->assertDatabaseMissing('gaming_session_participants', [
+            'gaming_session_id' => $session->id,
+            'user_id' => $user->id,
+        ]);
+
+        $result = $invitation->accept();
+
+        $this->assertTrue($result);
+        $this->assertEquals(GamingSessionInvitation::STATUS_ACCEPTED, $invitation->status);
+        $this->assertNotNull($invitation->responded_at);
+
+        // Check that participant was created
+        $this->assertDatabaseHas('gaming_session_participants', [
+            'gaming_session_id' => $session->id,
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function test_accept_group_invitation_does_not_create_participant()
+    {
+        $session = GamingSession::factory()->create();
+        $group = \App\Models\Group::factory()->create();
+        
+        $invitation = GamingSessionInvitation::factory()->pending()->create([
+            'gaming_session_id' => $session->id,
+            'invited_user_id' => null,
+            'invited_group_id' => $group->id,
+        ]);
+
+        $participantCountBefore = \App\Models\GamingSessionParticipant::count();
+
+        $result = $invitation->accept();
+
+        $this->assertTrue($result);
+        $this->assertEquals(GamingSessionInvitation::STATUS_ACCEPTED, $invitation->status);
+        $this->assertNotNull($invitation->responded_at);
+
+        // Check that no new participants were created
+        $participantCountAfter = \App\Models\GamingSessionParticipant::count();
+        $this->assertEquals($participantCountBefore, $participantCountAfter);
+    }
+
+    public function test_decline_sets_responded_at()
+    {
+        $invitation = GamingSessionInvitation::factory()->pending()->create([
+            'responded_at' => null,
+        ]);
+
+        $result = $invitation->decline();
+
+        $this->assertTrue($result);
+        $this->assertEquals(GamingSessionInvitation::STATUS_DECLINED, $invitation->status);
+        $this->assertNotNull($invitation->responded_at);
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $invitation->responded_at);
+    }
+
+    public function test_accept_sets_responded_at()
+    {
+        $invitation = GamingSessionInvitation::factory()->pending()->create([
+            'responded_at' => null,
+        ]);
+
+        $result = $invitation->accept();
+
+        $this->assertTrue($result);
+        $this->assertEquals(GamingSessionInvitation::STATUS_ACCEPTED, $invitation->status);
+        $this->assertNotNull($invitation->responded_at);
+        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $invitation->responded_at);
+    }
+
+    public function test_gaming_session_invitation_can_be_created_with_complete_data()
+    {
+        $session = GamingSession::factory()->create();
+        $inviter = User::factory()->create();
+        $invitee = User::factory()->create();
+        
+        $invitationData = [
+            'gaming_session_id' => $session->id,
+            'invited_user_id' => $invitee->id,
+            'invited_group_id' => null,
+            'invited_by_user_id' => $inviter->id,
+            'status' => GamingSessionInvitation::STATUS_PENDING,
+            'message' => 'Join our awesome gaming session!',
+            'responded_at' => null,
+        ];
+
+        $invitation = GamingSessionInvitation::create($invitationData);
+
+        $this->assertInstanceOf(GamingSessionInvitation::class, $invitation);
+        $this->assertEquals($session->id, $invitation->gaming_session_id);
+        $this->assertEquals($invitee->id, $invitation->invited_user_id);
+        $this->assertNull($invitation->invited_group_id);
+        $this->assertEquals($inviter->id, $invitation->invited_by_user_id);
+        $this->assertEquals(GamingSessionInvitation::STATUS_PENDING, $invitation->status);
+        $this->assertEquals('Join our awesome gaming session!', $invitation->message);
+        $this->assertNull($invitation->responded_at);
+        $this->assertTrue($invitation->isUserInvitation());
+        $this->assertFalse($invitation->isGroupInvitation());
+    }
+
+    public function test_multiple_scopes_can_be_chained()
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $targetInvitation = GamingSessionInvitation::factory()->create([
+            'invited_user_id' => $user->id,
+            'invited_group_id' => null,
+            'status' => GamingSessionInvitation::STATUS_PENDING,
+        ]);
+
+        $otherInvitation = GamingSessionInvitation::factory()->create([
+            'invited_user_id' => $otherUser->id,
+            'invited_group_id' => null,
+            'status' => GamingSessionInvitation::STATUS_ACCEPTED,
+        ]);
+
+        $results = GamingSessionInvitation::userInvitations()
+            ->pending()
+            ->forUser($user)
+            ->get();
+
+        $this->assertEquals(1, $results->count());
+        $this->assertTrue($results->contains('id', $targetInvitation->id));
+        $this->assertFalse($results->contains('id', $otherInvitation->id));
+    }
 }

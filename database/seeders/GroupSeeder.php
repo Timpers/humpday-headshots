@@ -230,8 +230,13 @@ class GroupSeeder extends Seeder
                 continue;
             }
 
-            // Create 2-5 invitations per group
-            $invitationCount = rand(2, min(5, $availableUsers->count()));
+            // Create 2-5 invitations per group, but don't exceed available users
+            $maxInvitations = min(5, $availableUsers->count());
+            if ($maxInvitations == 0) {
+                continue; // Skip if no available users
+            }
+            
+            $invitationCount = rand(min(2, $maxInvitations), $maxInvitations);
             $usersToInvite = $availableUsers->random($invitationCount);
 
             foreach ($usersToInvite as $userToInvite) {
