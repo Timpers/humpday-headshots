@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\UserConnection;
+use App\Notifications\ConnectionRequestNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -47,12 +48,16 @@ class UserConnectionController extends Controller
         }
 
         // Create the connection request
-        UserConnection::create([
+        $connection = UserConnection::create([
             'requester_id' => $currentUser->id,
             'recipient_id' => $recipientId,
             'message' => $request->message,
             'status' => UserConnection::STATUS_PENDING,
         ]);
+
+        // Send notification to recipient
+        $recipient = User::find($recipientId);
+        $recipient->notify(new ConnectionRequestNotification($connection));
 
         return back()->with('success', 'Connection request sent successfully!');
     }

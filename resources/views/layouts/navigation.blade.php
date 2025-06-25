@@ -62,6 +62,9 @@
             <div class="flex items-center space-x-4">
                 @if (Route::has('login'))
                     @auth
+                        <!-- Notifications Dropdown -->
+                        <x-notifications-dropdown />
+                        
                         <!-- User Dropdown -->
                         <div class="relative inline-block text-left">
                             <div class="flex items-center space-x-3">

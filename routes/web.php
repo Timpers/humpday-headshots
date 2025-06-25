@@ -128,4 +128,12 @@ Route::middleware('auth')->group(function () {
     Route::put('/gaming-sessions/{session}/messages/{message}', [\App\Http\Controllers\GamingSessionMessageController::class, 'update'])->name('gaming-sessions.messages.update');
     Route::delete('/gaming-sessions/{session}/messages/{message}', [\App\Http\Controllers\GamingSessionMessageController::class, 'destroy'])->name('gaming-sessions.messages.destroy');
     Route::get('/gaming-sessions/{session}/messages/recent', [\App\Http\Controllers\GamingSessionMessageController::class, 'recent'])->name('gaming-sessions.messages.recent');
+    
+    // Notifications
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::get('/notifications/count', [\App\Http\Controllers\NotificationController::class, 'unreadCount'])->name('notifications.count');
+    Route::post('/notifications/subscribe', [\App\Http\Controllers\NotificationController::class, 'subscribe'])->name('notifications.subscribe');
+    Route::post('/notifications/test', [\App\Http\Controllers\NotificationController::class, 'test'])->name('notifications.test');
 });

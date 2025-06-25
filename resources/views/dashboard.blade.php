@@ -39,6 +39,9 @@
                                 <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ $platformStats->count() }}</div>
                                 <div class="text-sm text-gray-500 dark:text-gray-400">Platforms</div>
                             </div>
+                            <button onclick="testNotification()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm">
+                                Test Notification
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -233,3 +236,30 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+async function testNotification() {
+    try {
+        const response = await fetch('/notifications/test', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Test notification sent! Check your notifications dropdown in a few seconds.');
+        } else {
+            alert('Failed to send test notification.');
+        }
+    } catch (error) {
+        console.error('Error sending test notification:', error);
+        alert('Error sending test notification.');
+    }
+}
+</script>
+@endpush

@@ -6,6 +6,7 @@ use App\Models\Group;
 use App\Models\GroupInvitation;
 use App\Models\GroupMembership;
 use App\Models\User;
+use App\Notifications\GroupInvitationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -67,12 +68,15 @@ class GroupInvitationController extends Controller
         }
 
         // Create the invitation
-        GroupInvitation::create([
+        $invitation = GroupInvitation::create([
             'group_id' => $group->id,
             'invited_user_id' => $invitedUser->id,
             'invited_by_user_id' => $inviter->id,
             'message' => $request->message,
         ]);
+
+        // Send notification to invited user
+        $invitedUser->notify(new GroupInvitationNotification($invitation));
 
         return back()->with('success', "Invitation sent to {$invitedUser->name}!");
     }

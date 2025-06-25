@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\GamingSession;
 use App\Models\GamingSessionMessage;
+use App\Notifications\GamingSessionMessageNotification;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class GamingSessionMessageController extends Controller
@@ -58,7 +60,22 @@ class GamingSessionMessageController extends Controller
             'type' => $validated['type'] ?? 'text'
         ]);
 
-        $message->load('user:id,name');
+        $message->load(['user:id,name', 'gamingSession']);
+
+        // Notify all session participants except the sender
+        $participants = $session->participantUsers()
+            ->where('users.id', '!=', Auth::id())
+            ->get();
+        
+        // Also notify the host if they're not the sender
+        if ($session->host_user_id !== Auth::id()) {
+            $participants = $participants->push($session->host);
+        }
+
+        // Send notifications
+        if ($participants->isNotEmpty()) {
+            Notification::send($participants, new GamingSessionMessageNotification($message));
+        }
 
         return response()->json([
             'success' => true,
