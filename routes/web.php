@@ -19,18 +19,18 @@ Route::get('/gamertag-test', function () {
     $platformStats = \App\Models\Gamertag::selectRaw('platform, count(*) as count')
         ->groupBy('platform')
         ->pluck('count', 'platform');
-    
+
     $totalUsers = \App\Models\User::count();
     $totalGamertags = \App\Models\Gamertag::count();
     $publicGamertags = \App\Models\Gamertag::where('is_public', true)->count();
     $primaryGamertags = \App\Models\Gamertag::where('is_primary', true)->count();
-    
+
     return view('gamertag-test', compact(
-        'users', 
-        'platformStats', 
-        'totalUsers', 
-        'totalGamertags', 
-        'publicGamertags', 
+        'users',
+        'platformStats',
+        'totalUsers',
+        'totalGamertags',
+        'publicGamertags',
         'primaryGamertags'
     ));
 })->name('gamertag.test');
@@ -50,18 +50,24 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
 });
 
-// Gamertag Routes (protected)
+// Public Gamertag Routes
+Route::get('gamertags', [GamertagController::class, 'index'])->name('gamertags.index');
+Route::get('gamertags/user/{user}', [GamertagController::class, 'userGamertags'])->name('gamertags.user');
+Route::get('gamertags/platform/{platform}', [GamertagController::class, 'platform'])->name('gamertags.platform');
+
+// Protected Gamertag Routes
 Route::middleware('auth')->group(function () {
-    Route::resource('gamertags', GamertagController::class);
-    
-    // Additional gamertag routes
-    Route::get('gamertags/user/{user}', [GamertagController::class, 'userGamertags'])->name('gamertags.user');
-    Route::get('gamertags/platform/{platform}', [GamertagController::class, 'platform'])->name('gamertags.platform');
+    Route::get('gamertags/create', [GamertagController::class, 'create'])->name('gamertags.create');
+    Route::post('gamertags', [GamertagController::class, 'store'])->name('gamertags.store');
+    Route::get('gamertags/{gamertag}', [GamertagController::class, 'show'])->name('gamertags.show');
+    Route::get('gamertags/{gamertag}/edit', [GamertagController::class, 'edit'])->name('gamertags.edit');
+    Route::put('gamertags/{gamertag}', [GamertagController::class, 'update'])->name('gamertags.update');
+    Route::delete('gamertags/{gamertag}', [GamertagController::class, 'destroy'])->name('gamertags.destroy');
 });
 
 // Game Routes (protected)
@@ -79,14 +85,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/social/browse', [\App\Http\Controllers\SocialController::class, 'browse'])->name('social.browse');
     Route::get('/social/friends', [\App\Http\Controllers\SocialController::class, 'friends'])->name('social.friends');
     Route::get('/social/requests', [\App\Http\Controllers\SocialController::class, 'requests'])->name('social.requests');
-    
+
     // Connection management
-    Route::post('/connections', [\App\Http\Controllers\UserConnectionController::class, 'store'])->name('connections.store');
-    Route::patch('/connections/{connection}/accept', [\App\Http\Controllers\UserConnectionController::class, 'accept'])->name('connections.accept');
-    Route::patch('/connections/{connection}/decline', [\App\Http\Controllers\UserConnectionController::class, 'decline'])->name('connections.decline');
-    Route::delete('/connections/{connection}/cancel', [\App\Http\Controllers\UserConnectionController::class, 'cancel'])->name('connections.cancel');
-    Route::patch('/connections/{connection}/block', [\App\Http\Controllers\UserConnectionController::class, 'block'])->name('connections.block');
-    Route::delete('/connections/{connection}', [\App\Http\Controllers\UserConnectionController::class, 'destroy'])->name('connections.destroy');
+    Route::get('/user-connections/create', [\App\Http\Controllers\UserConnectionController::class, 'create'])->name('user-connections.create');
+    Route::post('/user-connections', [\App\Http\Controllers\UserConnectionController::class, 'store'])->name('user-connections.store');
+    Route::post('/user-connections/{connection}/accept', [\App\Http\Controllers\UserConnectionController::class, 'accept'])->name('user-connections.accept');
+    Route::post('/user-connections/{connection}/decline', [\App\Http\Controllers\UserConnectionController::class, 'decline'])->name('user-connections.decline');
+    Route::post('/user-connections/{connection}/cancel', [\App\Http\Controllers\UserConnectionController::class, 'cancel'])->name('user-connections.cancel');
+    Route::post('/user-connections/{connection}/block', [\App\Http\Controllers\UserConnectionController::class, 'block'])->name('user-connections.block');
+    Route::delete('/user-connections/{connection}', [\App\Http\Controllers\UserConnectionController::class, 'destroy'])->name('user-connections.destroy');
 });
 
 // Group Routes (protected)
@@ -95,21 +102,22 @@ Route::middleware('auth')->group(function () {
     Route::resource('groups', \App\Http\Controllers\GroupController::class);
     Route::get('/my-groups', [\App\Http\Controllers\GroupController::class, 'myGroups'])->name('groups.my-groups');
     Route::post('/groups/{group}/join', [\App\Http\Controllers\GroupController::class, 'join'])->name('groups.join');
-    Route::delete('/groups/{group}/leave', [\App\Http\Controllers\GroupController::class, 'leave'])->name('groups.leave');
-    
+    Route::post('/groups/{group}/leave', [\App\Http\Controllers\GroupController::class, 'leave'])->name('groups.leave');
+
     // Group invitations
+    Route::get('/group-invitations', [\App\Http\Controllers\GroupInvitationController::class, 'index'])->name('group-invitations.index');
     Route::get('/my-invitations', [\App\Http\Controllers\GroupInvitationController::class, 'index'])->name('groups.my-invitations');
     Route::post('/group-invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])->name('group-invitations.store');
     Route::get('/group-invitations/{invitation}', [\App\Http\Controllers\GroupInvitationController::class, 'show'])->name('group-invitations.show');
-    Route::patch('/group-invitations/{invitation}/accept', [\App\Http\Controllers\GroupInvitationController::class, 'accept'])->name('group-invitations.accept');
-    Route::patch('/group-invitations/{invitation}/decline', [\App\Http\Controllers\GroupInvitationController::class, 'decline'])->name('group-invitations.decline');
-    Route::delete('/group-invitations/{invitation}/cancel', [\App\Http\Controllers\GroupInvitationController::class, 'cancel'])->name('group-invitations.cancel');
+    Route::post('/group-invitations/{invitation}/accept', [\App\Http\Controllers\GroupInvitationController::class, 'accept'])->name('group-invitations.accept');
+    Route::post('/group-invitations/{invitation}/decline', [\App\Http\Controllers\GroupInvitationController::class, 'decline'])->name('group-invitations.decline');
+    Route::post('/group-invitations/{invitation}/cancel', [\App\Http\Controllers\GroupInvitationController::class, 'cancel'])->name('group-invitations.cancel');
     Route::post('/group-invitations/bulk-action', [\App\Http\Controllers\GroupInvitationController::class, 'bulkAction'])->name('group-invitations.bulk-action');
 
     // Gaming Sessions
     Route::resource('gaming-sessions', \App\Http\Controllers\GamingSessionController::class);
     Route::post('/gaming-sessions/{gamingSession}/join', [\App\Http\Controllers\GamingSessionController::class, 'join'])->name('gaming-sessions.join');
-    Route::delete('/gaming-sessions/{gamingSession}/leave', [\App\Http\Controllers\GamingSessionController::class, 'leave'])->name('gaming-sessions.leave');
+    Route::post('/gaming-sessions/{gamingSession}/leave', [\App\Http\Controllers\GamingSessionController::class, 'leave'])->name('gaming-sessions.leave');
     Route::get('/search-games', [\App\Http\Controllers\GamingSessionController::class, 'searchGames'])->name('gaming-sessions.search-games');
-    Route::post('/gaming-session-invitations/{invitation}/respond', [\App\Http\Controllers\GamingSessionController::class, 'respondToInvitation'])->name('gaming-session-invitations.respond');
+    Route::post('/gaming-sessions/invitations/{invitation}/respond', [\App\Http\Controllers\GamingSessionController::class, 'respondToInvitation'])->name('gaming-sessions.respond-invitation');
 });

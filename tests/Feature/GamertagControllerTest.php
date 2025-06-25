@@ -29,6 +29,7 @@ class GamertagControllerTest extends TestCase
             'gamertag' => 'PublicPlayer1',
             'platform' => 'steam',
             'is_public' => true,
+            'is_primary' => true,
         ]);
 
         Gamertag::factory()->create([
@@ -36,14 +37,16 @@ class GamertagControllerTest extends TestCase
             'gamertag' => 'PublicPlayer2',
             'platform' => 'xbox_live',
             'is_public' => true,
+            'is_primary' => true,
         ]);
 
         // Create private gamertag (should not appear)
         Gamertag::factory()->create([
             'user_id' => $user1->id,
             'gamertag' => 'PrivatePlayer',
-            'platform' => 'steam',
+            'platform' => 'playstation_network', // Different platform to avoid constraint issues
             'is_public' => false,
+            'is_primary' => true,
         ]);
 
         $response = $this->get(route('gamertags.index'));
@@ -67,6 +70,7 @@ class GamertagControllerTest extends TestCase
             'gamertag' => 'UserPublic1',
             'platform' => 'steam',
             'is_public' => true,
+            'is_primary' => true,
         ]);
 
         Gamertag::factory()->create([
@@ -74,14 +78,16 @@ class GamertagControllerTest extends TestCase
             'gamertag' => 'UserPublic2',
             'platform' => 'xbox_live',
             'is_public' => true,
+            'is_primary' => true,
         ]);
 
         // Create private gamertag (should not appear)
         Gamertag::factory()->create([
             'user_id' => $user->id,
             'gamertag' => 'UserPrivate',
-            'platform' => 'steam',
+            'platform' => 'playstation_network',
             'is_public' => false,
+            'is_primary' => true,
         ]);
 
         // Create public gamertag for other user (should not appear)
@@ -90,6 +96,7 @@ class GamertagControllerTest extends TestCase
             'gamertag' => 'OtherUser',
             'platform' => 'steam',
             'is_public' => true,
+            'is_primary' => true,
         ]);
 
         $response = $this->get(route('gamertags.user', $user));
@@ -114,6 +121,7 @@ class GamertagControllerTest extends TestCase
             'gamertag' => 'SteamPlayer1',
             'platform' => 'steam',
             'is_public' => true,
+            'is_primary' => true,
         ]);
 
         Gamertag::factory()->create([
@@ -121,6 +129,7 @@ class GamertagControllerTest extends TestCase
             'gamertag' => 'SteamPlayer2',
             'platform' => 'steam',
             'is_public' => true,
+            'is_primary' => true,
         ]);
 
         // Create gamertag for different platform (should not appear)
@@ -129,6 +138,7 @@ class GamertagControllerTest extends TestCase
             'gamertag' => 'XboxPlayer',
             'platform' => 'xbox_live',
             'is_public' => true,
+            'is_primary' => true,
         ]);
 
         $response = $this->get(route('gamertags.platform', 'steam'));

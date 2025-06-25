@@ -191,7 +191,11 @@ class GamingSession extends Model
      */
     public function isSoon(): bool
     {
-        return $this->scheduled_at->diffInMinutes(now()) <= 60 && $this->isUpcoming();
+        if (!$this->isUpcoming()) {
+            return false;
+        }
+
+        return $this->scheduled_at <= now()->addHour();
     }
 
     /**

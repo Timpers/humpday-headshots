@@ -66,7 +66,7 @@ class GameController extends Controller
                 ->get();
 
             $formattedGames = $games->map(function ($game) {
-               
+
                 return [
                     'id' => $game->id,
                     'name' => $game->name,
@@ -133,7 +133,7 @@ class GameController extends Controller
 
         // Create the game record
         $gameData = $request->only([
-            'igdb_id', 'name', 'platform', 'status', 'user_rating', 
+            'igdb_id', 'name', 'platform', 'status', 'user_rating',
             'notes', 'hours_played', 'date_purchased', 'price_paid'
         ]);
 
@@ -167,6 +167,11 @@ class GameController extends Controller
      */
     public function show(Game $game)
     {
+        // Check if the game belongs to the authenticated user
+        if ($game->user_id !== Auth::id()) {
+            abort(403);
+        }
+
         return view('games.show', compact('game'));
     }
 
@@ -175,6 +180,11 @@ class GameController extends Controller
      */
     public function edit(Game $game)
     {
+        // Check if the game belongs to the authenticated user
+        if ($game->user_id !== Auth::id()) {
+            abort(403);
+        }
+
         return view('games.edit', compact('game'));
     }
 
@@ -183,6 +193,11 @@ class GameController extends Controller
      */
     public function update(Request $request, Game $game)
     {
+        // Check if the game belongs to the authenticated user
+        if ($game->user_id !== Auth::id()) {
+            abort(403);
+        }
+
         $request->validate([
             'platform' => 'required|string|in:' . implode(',', array_keys(Game::PLATFORMS)),
             'status' => 'required|string|in:' . implode(',', array_keys(Game::STATUSES)),
@@ -207,7 +222,7 @@ class GameController extends Controller
 
         $game->update($gameData);
 
-        return redirect()->route('games.index')
+        return redirect()->route('games.show', $game)
             ->with('success', 'Game updated successfully!');
     }
 
@@ -216,6 +231,11 @@ class GameController extends Controller
      */
     public function destroy(Game $game)
     {
+        // Check if the game belongs to the authenticated user
+        if ($game->user_id !== Auth::id()) {
+            abort(403);
+        }
+
         $game->delete();
 
         return redirect()->route('games.index')

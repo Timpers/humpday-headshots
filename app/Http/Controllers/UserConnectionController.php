@@ -149,4 +149,46 @@ class UserConnectionController extends Controller
 
         return back()->with('success', 'Connection removed.');
     }
+
+    /**
+     * Show the form for creating a new connection request
+     */
+    public function create(Request $request)
+    {
+        $user = null;
+        $availableUsers = collect();
+        
+        // If user_id is provided, load that specific user
+        if ($request->has('user_id')) {
+            $user = User::with('gamertags')->findOrFail($request->user_id);
+            
+            // Check if current user is trying to connect with themselves
+            if ($user->id === Auth::id()) {
+                return redirect()->route('social.browse')->withErrors(['connection' => 'You cannot connect with yourself.']);
+            }
+            
+            // Check if connection already exists
+            $existingConnection = UserConnection::where(function ($query) use ($user) {
+                $query->where('requester_id', Auth::id())
+                      ->where('recipient_id', $user->id);
+            })->orWhere(function ($query) use ($user) {
+                $query->where('requester_id', $user->id)
+                      ->where('recipient_id', Auth::id());
+            })->first();
+            
+            if ($existingConnection) {
+                return redirect()->route('social.browse')->withErrors(['connection' => 'A connection already exists with this user.']);
+            }
+        } else {
+            // Get users available for connection (excluding current user and existing connections)
+            $connectedUserIds = UserConnection::where(function ($query) {
+                $query->where('requester_id', Auth::id())
+                      ->orWhere('recipient_id', Auth::id());
+            })->get()->pluck('requester_id', 'recipient_id')->flatten()->unique();
+            
+            $availableUsers = User::whereNotIn('id', $connectedUserIds->push(Auth::id()))->get();
+        }
+        
+        return view('social.connection-request', compact('user', 'availableUsers'));
+    }
 }

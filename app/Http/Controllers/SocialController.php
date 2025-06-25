@@ -40,17 +40,17 @@ class SocialController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         // Get user's connections stats using raw queries for now
         $stats = [
             'friends' => UserConnection::where(function ($query) use ($user) {
                 $query->where('requester_id', $user->id)
                       ->orWhere('recipient_id', $user->id);
             })->where('status', UserConnection::STATUS_ACCEPTED)->count(),
-            
+
             'pending_received' => UserConnection::where('recipient_id', $user->id)
                 ->where('status', UserConnection::STATUS_PENDING)->count(),
-                
+
             'pending_sent' => UserConnection::where('requester_id', $user->id)
                 ->where('status', UserConnection::STATUS_PENDING)->count(),
         ];
@@ -102,7 +102,7 @@ class SocialController extends Controller
         if ($type === 'users' || $type === 'all') {
             // Enhanced user search with platform filtering
             $userQuery = User::where('id', '!=', $currentUser->id);
-            
+
             if (!empty($query)) {
                 $userQuery->where(function ($q) use ($query) {
                     $q->where('name', 'like', "%{$query}%")
@@ -212,17 +212,19 @@ class SocialController extends Controller
     public function browse(Request $request)
     {
         $currentUser = Auth::user();
-        $platform = $request->get('platform');
+        $platform = $request->get('platform', '');
 
         $users = User::where('id', '!=', $currentUser->id)
             ->withCount(['gamertags' => function ($q) {
                 $q->where('is_public', true);
             }])
-            ->having('gamertags_count', '>', 0)
             ->when($platform, function ($query, $platform) {
                 return $query->whereHas('gamertags', function ($q) use ($platform) {
                     $q->where('platform', $platform)->where('is_public', true);
                 });
+            })
+            ->whereHas('gamertags', function ($q) {
+                $q->where('is_public', true);
             })
             ->with(['gamertags' => function ($q) use ($platform) {
                 $q->where('is_public', true);
@@ -247,7 +249,7 @@ class SocialController extends Controller
     public function friends()
     {
         $user = Auth::user();
-        
+
         $friends = UserConnection::where(function ($query) use ($user) {
             $query->where('requester_id', $user->id)
                   ->orWhere('recipient_id', $user->id);
@@ -270,7 +272,7 @@ class SocialController extends Controller
     public function requests()
     {
         $user = Auth::user();
-        
+
         $receivedRequests = UserConnection::where('recipient_id', $user->id)
             ->where('status', UserConnection::STATUS_PENDING)
             ->with('requester.gamertags')
