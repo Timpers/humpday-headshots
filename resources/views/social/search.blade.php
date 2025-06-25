@@ -101,7 +101,7 @@
 
                                         <!-- Connection Action -->
                                         @if($user['connection_status'] === null)
-                                            <form action="{{ route('connections.store') }}" method="POST" class="inline">
+                                            <form action="{{ route('user-connections.store') }}" method="POST" class="inline">
                                                 @csrf
                                                 <input type="hidden" name="recipient_id" value="{{ $user['id'] }}">
                                                 <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">
@@ -115,14 +115,14 @@
                                                 </span>
                                             @else
                                                 <div class="flex gap-2">
-                                                    <form action="{{ route('connections.accept', $user['connection_status']['connection']) }}" method="POST" class="flex-1">
+                                                    <form action="{{ route('user-connections.accept', $user['connection_status']['connection']) }}" method="POST" class="flex-1">
                                                         @csrf
                                                         @method('PATCH')
                                                         <button type="submit" class="w-full px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
                                                             Accept
                                                         </button>
                                                     </form>
-                                                    <form action="{{ route('connections.decline', $user['connection_status']['connection']) }}" method="POST" class="flex-1">
+                                                    <form action="{{ route('user-connections.decline', $user['connection_status']['connection']) }}" method="POST" class="flex-1">
                                                         @csrf
                                                         @method('PATCH')
                                                         <button type="submit" class="w-full px-3 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700">
@@ -170,7 +170,7 @@
 
                                         <!-- Connection Action -->
                                         @if($gamertag['connection_status'] === null)
-                                            <form action="{{ route('connections.store') }}" method="POST" class="inline">
+                                            <form action="{{ route('user-connections.store') }}" method="POST" class="inline">
                                                 @csrf
                                                 <input type="hidden" name="recipient_id" value="{{ $gamertag['user']['id'] }}">
                                                 <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">
@@ -184,14 +184,14 @@
                                                 </span>
                                             @else
                                                 <div class="flex gap-2">
-                                                    <form action="{{ route('connections.accept', $gamertag['connection_status']['connection']) }}" method="POST" class="flex-1">
+                                                    <form action="{{ route('user-connections.accept', $gamertag['connection_status']['connection']) }}" method="POST" class="flex-1">
                                                         @csrf
                                                         @method('PATCH')
                                                         <button type="submit" class="w-full px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
                                                             Accept
                                                         </button>
                                                     </form>
-                                                    <form action="{{ route('connections.decline', $gamertag['connection_status']['connection']) }}" method="POST" class="flex-1">
+                                                    <form action="{{ route('user-connections.decline', $gamertag['connection_status']['connection']) }}" method="POST" class="flex-1">
                                                         @csrf
                                                         @method('PATCH')
                                                         <button type="submit" class="w-full px-3 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700">
@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function getConnectionButton(connectionStatus, userId) {
         if (!connectionStatus) {
             return `
-                <form action="{{ route('connections.store') }}" method="POST" class="inline">
+                <form action="{{ route('user-connections.store') }}" method="POST" class="inline">
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="recipient_id" value="${userId}">
                     <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">

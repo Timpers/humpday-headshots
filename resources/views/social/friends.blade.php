@@ -60,7 +60,7 @@
 
                             <!-- Actions -->
                             <div class="flex space-x-2">
-                                <form action="{{ route('connections.destroy', $connection) }}" method="POST" class="flex-1">
+                                <form action="{{ route('user-connections.destroy', $connection) }}" method="POST" class="flex-1">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" 
@@ -69,7 +69,7 @@
                                         Remove Friend
                                     </button>
                                 </form>
-                                <form action="{{ route('connections.block', $connection) }}" method="POST">
+                                <form action="{{ route('user-connections.block', $connection) }}" method="POST">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" 

@@ -68,7 +68,7 @@
                                                 Decline
                                             </button>
                                         </form>
-                                        <form action="{{ route('connections.block', $request) }}" method="POST">
+                                        <form action="{{ route('user-connections.block', $request) }}" method="POST">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" 

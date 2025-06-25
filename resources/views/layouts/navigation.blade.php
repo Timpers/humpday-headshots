@@ -13,8 +13,11 @@
                         <a href="{{ route('dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('dashboard') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
                             Dashboard
                         </a>
-                        <a href="{{ route('games.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('games.*') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
+                        <a href="{{ route('games.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('games.*') && !request()->routeIs('games.compatibility.*') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
                             Games
+                        </a>
+                        <a href="{{ route('games.compatibility.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('games.compatibility.*') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
+                            Compatibility
                         </a>
                         <a href="{{ route('gamertags.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('gamertags.*') ? 'border-indigo-500 text-gray-900 dark:text-gray-100' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300' }} text-sm font-medium">
                             Gamertags

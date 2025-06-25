@@ -136,4 +136,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/count', [\App\Http\Controllers\NotificationController::class, 'unreadCount'])->name('notifications.count');
     Route::post('/notifications/subscribe', [\App\Http\Controllers\NotificationController::class, 'subscribe'])->name('notifications.subscribe');
     Route::post('/notifications/test', [\App\Http\Controllers\NotificationController::class, 'test'])->name('notifications.test');
+
+    // Game Compatibility
+    Route::get('/games/compatibility', [\App\Http\Controllers\GameCompatibilityController::class, 'index'])->name('games.compatibility.index');
+    Route::get('/games/compatibility/compare/{user}', [\App\Http\Controllers\GameCompatibilityController::class, 'compare'])->name('games.compatibility.compare');
+    Route::get('/games/compatibility/api/{user}', [\App\Http\Controllers\GameCompatibilityController::class, 'getCompatibility'])->name('games.compatibility.api');
 });

@@ -146,14 +146,14 @@
                                     </div>
                                 </div>
                                 <div class="flex space-x-2">
-                                    <form action="{{ route('connections.accept', $request) }}" method="POST" class="inline">
+                                    <form action="{{ route('user-connections.accept', $request) }}" method="POST" class="inline">
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" class="px-3 py-1 bg-green-600 text-white text-xs rounded-md hover:bg-green-700">
                                             Accept
                                         </button>
                                     </form>
-                                    <form action="{{ route('connections.decline', $request) }}" method="POST" class="inline">
+                                    <form action="{{ route('user-connections.decline', $request) }}" method="POST" class="inline">
                                         @csrf
                                         @method('PATCH')
                                         <button type="submit" class="px-3 py-1 bg-gray-600 text-white text-xs rounded-md hover:bg-gray-700">
