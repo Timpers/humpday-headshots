@@ -25,7 +25,7 @@
                 <p class="text-sm text-gray-500">
                     {{ $user->email }}
                 </p>
-                
+
                 {{-- Connection Status --}}
                 <div class="mt-2">
                     @if($connection->status === 'pending')
@@ -79,7 +79,7 @@
                         Accept
                     </button>
                 </form>
-                
+
                 <form action="{{ route('user-connections.decline', $connection) }}" method="POST" class="inline">
                     @csrf
                     <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -108,7 +108,7 @@
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
                         </svg>
                     </button>
-                    
+
                     <div id="dropdown-{{ $connection->id }}" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
                         <div class="py-1">
                             <form id="remove-form-{{ $connection->id }}" action="{{ route('user-connections.destroy', $connection) }}" method="POST" class="hidden">
@@ -118,7 +118,7 @@
                             <button onclick="removeConnection({{ $connection->id }}, '{{ $user->name }}')" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 Remove Connection
                             </button>
-                            
+
                             <form id="block-form-{{ $connection->id }}" action="{{ route('user-connections.block', $connection) }}" method="POST" class="hidden">
                                 @csrf
                             </form>
@@ -163,14 +163,14 @@
 function toggleDropdown(connectionId) {
     const dropdown = document.getElementById(`dropdown-${connectionId}`);
     const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
-    
+
     // Close all other dropdowns
     allDropdowns.forEach(d => {
         if (d.id !== `dropdown-${connectionId}`) {
             d.classList.add('hidden');
         }
     });
-    
+
     // Toggle current dropdown
     dropdown.classList.toggle('hidden');
 }

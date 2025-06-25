@@ -52,11 +52,11 @@
         {{-- Tabs --}}
         <div class="border-b border-gray-200 mb-8">
             <nav class="-mb-px flex space-x-8">
-                <a href="{{ route('social.friends') }}" 
+                <a href="{{ route('social.friends') }}"
                    class="py-2 px-1 border-b-2 {{ request()->routeIs('social.friends') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap font-medium text-sm">
                     My Connections
                 </a>
-                <a href="{{ route('social.requests') }}" 
+                <a href="{{ route('social.requests') }}"
                    class="py-2 px-1 border-b-2 {{ request()->routeIs('social.requests') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap font-medium text-sm">
                     Requests
                     @if(isset($pendingRequestsCount) && $pendingRequestsCount > 0)
@@ -65,7 +65,7 @@
                         </span>
                     @endif
                 </a>
-                <a href="{{ route('social.browse') }}" 
+                <a href="{{ route('social.browse') }}"
                    class="py-2 px-1 border-b-2 {{ request()->routeIs('social.browse') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap font-medium text-sm">
                     Find Gamers
                 </a>

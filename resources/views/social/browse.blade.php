@@ -75,7 +75,7 @@
                                 $query->where('requester_id', $user->id)
                                       ->where('recipient_id', Auth::id());
                             })->first();
-                            
+
                             $connectionStatus = $connection ? [
                                 'status' => $connection->status,
                                 'is_requester' => $connection->requester_id === Auth::id(),

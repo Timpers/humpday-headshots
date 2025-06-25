@@ -31,15 +31,15 @@
         <form action="{{ route('user-connections.store') }}" method="POST" class="space-y-4">
             @csrf
             <input type="hidden" name="recipient_id" value="{{ $user->id }}">
-            
+
             <div>
                 <label for="message-{{ $user->id }}" class="block text-sm font-medium text-gray-700 mb-1">
                     Message (Optional)
                 </label>
-                <textarea 
-                    name="message" 
+                <textarea
+                    name="message"
                     id="message-{{ $user->id }}"
-                    rows="3" 
+                    rows="3"
                     maxlength="500"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                     placeholder="Hi {{ $user->name }}, I'd like to connect with you..."
@@ -50,8 +50,8 @@
             </div>
 
             <div class="flex space-x-3">
-                <button 
-                    type="submit" 
+                <button
+                    type="submit"
                     class="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                 >
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -59,9 +59,9 @@
                     </svg>
                     <span>Send Request</span>
                 </button>
-                
-                <button 
-                    type="button" 
+
+                <button
+                    type="button"
                     onclick="this.closest('.connection-form-container').querySelector('form').style.display='none'; this.closest('.connection-form-container').querySelector('.connection-quick-actions').style.display='block';"
                     class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                 >
@@ -72,7 +72,7 @@
 
         {{-- Quick Actions (shown initially) --}}
         <div class="connection-quick-actions">
-            <button 
+            <button
                 onclick="this.closest('.connection-form-container').querySelector('form').style.display='block'; this.style.display='none';"
                 class="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
             >
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Character counter for message textarea
     const textarea = document.getElementById('message-{{ $user->id }}');
     const charCount = document.getElementById('char-count-{{ $user->id }}');
-    
+
     if (textarea && charCount) {
         textarea.addEventListener('input', function() {
             charCount.textContent = this.value.length;
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initially hide the form and show quick actions
     const form = document.querySelector('.connection-form-container form');
     const quickActions = document.querySelector('.connection-quick-actions');
-    
+
     if (form && quickActions) {
         form.style.display = 'none';
     }
