@@ -89,6 +89,7 @@ Route::middleware('auth')->group(function () {
     // Connection management
     Route::get('/user-connections/create', [\App\Http\Controllers\UserConnectionController::class, 'create'])->name('user-connections.create');
     Route::post('/user-connections', [\App\Http\Controllers\UserConnectionController::class, 'store'])->name('user-connections.store');
+    Route::post('/connections', [\App\Http\Controllers\UserConnectionController::class, 'store'])->name('connections.store'); // Alias for convenience
     Route::post('/user-connections/{connection}/accept', [\App\Http\Controllers\UserConnectionController::class, 'accept'])->name('user-connections.accept');
     Route::post('/user-connections/{connection}/decline', [\App\Http\Controllers\UserConnectionController::class, 'decline'])->name('user-connections.decline');
     Route::post('/user-connections/{connection}/cancel', [\App\Http\Controllers\UserConnectionController::class, 'cancel'])->name('user-connections.cancel');
