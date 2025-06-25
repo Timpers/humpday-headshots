@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GamertagController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GameCompatibilityController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 
@@ -72,6 +73,11 @@ Route::middleware('auth')->group(function () {
 
 // Game Routes (protected)
 Route::middleware('auth')->group(function () {
+        // Game Compatibility
+    Route::get('/games/compatibility', [GameCompatibilityController::class, 'index'])->name('games.compatibility.index');
+    Route::get('/games/compatibility/compare/{user}', [GameCompatibilityController::class, 'compare'])->name('games.compatibility.compare');
+    Route::get('/games/compatibility/api/{user}', [GameCompatibilityController::class, 'getCompatibility'])->name('games.compatibility.api');
+
     Route::resource('games', \App\Http\Controllers\GameController::class);
     Route::post('games/search', [\App\Http\Controllers\GameController::class, 'search'])->name('games.search');
 });
@@ -137,8 +143,4 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/subscribe', [\App\Http\Controllers\NotificationController::class, 'subscribe'])->name('notifications.subscribe');
     Route::post('/notifications/test', [\App\Http\Controllers\NotificationController::class, 'test'])->name('notifications.test');
 
-    // Game Compatibility
-    Route::get('/games/compatibility', [\App\Http\Controllers\GameCompatibilityController::class, 'index'])->name('games.compatibility.index');
-    Route::get('/games/compatibility/compare/{user}', [\App\Http\Controllers\GameCompatibilityController::class, 'compare'])->name('games.compatibility.compare');
-    Route::get('/games/compatibility/api/{user}', [\App\Http\Controllers\GameCompatibilityController::class, 'getCompatibility'])->name('games.compatibility.api');
 });
