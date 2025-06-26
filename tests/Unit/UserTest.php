@@ -25,6 +25,7 @@ class UserTest extends TestCase
             'name',
             'email',
             'password',
+            'push_subscription',
         ];
 
         $user = new User();
@@ -76,10 +77,12 @@ class UserTest extends TestCase
         $user = User::factory()->create();
         $publicGamertag = Gamertag::factory()->create([
             'user_id' => $user->id,
+            'platform' => 'steam',
             'is_public' => true,
         ]);
         $privateGamertag = Gamertag::factory()->create([
             'user_id' => $user->id,
+            'platform' => 'xbox_live',
             'is_public' => false,
         ]);
 

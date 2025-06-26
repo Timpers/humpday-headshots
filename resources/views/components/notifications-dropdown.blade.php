@@ -7,7 +7,6 @@
         :class="{ 'text-blue-600 dark:text-blue-400': hasUnread }"
     >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zm-5-15a7.5 7.5 0 107.5 7.5c0-4.08-3.27-7.5-7.5-7.5z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.73 21a1.999 1.999 0 01-3.46 0M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9z"></path>
         </svg>
         

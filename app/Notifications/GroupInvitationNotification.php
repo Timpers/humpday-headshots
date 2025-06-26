@@ -21,7 +21,7 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
      */
     public function __construct(GroupInvitation $invitation, string $action = 'sent')
     {
-        $this->invitation = $invitation->load(['group', 'invitedUser', 'inviterUser']);
+        $this->invitation = $invitation->load(['group', 'invitedUser', 'invitedBy']);
         $this->action = $action; // 'sent', 'accepted', 'declined'
     }
 
@@ -49,7 +49,7 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
 
         return (new MailMessage)
                     ->subject('Group Invitation Update')
-                    ->line($this->invitation->inviterUser->name . ' ' . $actionText . ' the group "' . $this->invitation->group->name . '".')
+                    ->line($this->invitation->invitedBy->name . ' ' . $actionText . ' the group "' . $this->invitation->group->name . '".')
                     ->when($this->invitation->message, function($mail) {
                         return $mail->line('Message: "' . $this->invitation->message . '"');
                     })
@@ -70,8 +70,8 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
             'action' => $this->action,
             'group_name' => $this->invitation->group->name,
             'group_id' => $this->invitation->group_id,
-            'inviter_name' => $this->invitation->inviterUser->name,
-            'inviter_id' => $this->invitation->inviter_user_id,
+            'inviter_name' => $this->invitation->invitedBy->name,
+            'inviter_id' => $this->invitation->invited_by_user_id,
             'message' => $this->invitation->message,
             'url' => route('groups.show', $this->invitation->group),
         ];
@@ -90,7 +90,7 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
         };
 
         $body = match($this->action) {
-            'sent' => $this->invitation->inviterUser->name . ' invited you to join ' . $this->invitation->group->name,
+            'sent' => $this->invitation->invitedBy->name . ' invited you to join ' . $this->invitation->group->name,
             'accepted' => $this->invitation->invitedUser->name . ' joined ' . $this->invitation->group->name,
             'declined' => $this->invitation->invitedUser->name . ' declined to join ' . $this->invitation->group->name,
             default => 'Group invitation updated'

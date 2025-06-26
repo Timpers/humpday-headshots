@@ -6,6 +6,14 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GameCompatibilityController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\SocialController;
+use App\Http\Controllers\GameController;
+use App\Http\Controllers\GamingSessionController;
+use App\Http\Controllers\GamingSessionMessageController;
+use App\Http\Controllers\UserConnectionController;
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\GroupInvitationController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -78,69 +86,69 @@ Route::middleware('auth')->group(function () {
     Route::get('/games/compatibility/compare/{user}', [GameCompatibilityController::class, 'compare'])->name('games.compatibility.compare');
     Route::get('/games/compatibility/api/{user}', [GameCompatibilityController::class, 'getCompatibility'])->name('games.compatibility.api');
 
-    Route::resource('games', \App\Http\Controllers\GameController::class);
-    Route::post('games/search', [\App\Http\Controllers\GameController::class, 'search'])->name('games.search');
+    Route::resource('games', GameController::class);
+    Route::post('games/search', [GameController::class, 'search'])->name('games.search');
 });
 
 // Social/Connection Routes (protected)
 Route::middleware('auth')->group(function () {
     // Social hub pages
-    Route::get('/social', [\App\Http\Controllers\SocialController::class, 'index'])->name('social.index');
-    Route::get('/social/search', [\App\Http\Controllers\SocialController::class, 'search'])->name('social.search');
-    Route::post('/social/search', [\App\Http\Controllers\SocialController::class, 'search']);
-    Route::get('/social/browse', [\App\Http\Controllers\SocialController::class, 'browse'])->name('social.browse');
-    Route::get('/social/friends', [\App\Http\Controllers\SocialController::class, 'friends'])->name('social.friends');
-    Route::get('/social/requests', [\App\Http\Controllers\SocialController::class, 'requests'])->name('social.requests');
+    Route::get('/social', [SocialController::class, 'index'])->name('social.index');
+    Route::get('/social/search', [SocialController::class, 'search'])->name('social.search');
+    Route::post('/social/search', [SocialController::class, 'search']);
+    Route::get('/social/browse', [SocialController::class, 'browse'])->name('social.browse');
+    Route::get('/social/friends', [SocialController::class, 'friends'])->name('social.friends');
+    Route::get('/social/requests', [SocialController::class, 'requests'])->name('social.requests');
 
     // Connection management
-    Route::get('/user-connections/create', [\App\Http\Controllers\UserConnectionController::class, 'create'])->name('user-connections.create');
-    Route::post('/user-connections', [\App\Http\Controllers\UserConnectionController::class, 'store'])->name('user-connections.store');
-    Route::post('/connections', [\App\Http\Controllers\UserConnectionController::class, 'store'])->name('connections.store'); // Alias for convenience
-    Route::post('/user-connections/{connection}/accept', [\App\Http\Controllers\UserConnectionController::class, 'accept'])->name('user-connections.accept');
-    Route::post('/user-connections/{connection}/decline', [\App\Http\Controllers\UserConnectionController::class, 'decline'])->name('user-connections.decline');
-    Route::post('/user-connections/{connection}/cancel', [\App\Http\Controllers\UserConnectionController::class, 'cancel'])->name('user-connections.cancel');
-    Route::post('/user-connections/{connection}/block', [\App\Http\Controllers\UserConnectionController::class, 'block'])->name('user-connections.block');
-    Route::delete('/user-connections/{connection}', [\App\Http\Controllers\UserConnectionController::class, 'destroy'])->name('user-connections.destroy');
+    Route::get('/user-connections/create', [UserConnectionController::class, 'create'])->name('user-connections.create');
+    Route::post('/user-connections', [UserConnectionController::class, 'store'])->name('user-connections.store');
+    Route::post('/connections', [UserConnectionController::class, 'store'])->name('connections.store'); // Alias for convenience
+    Route::post('/user-connections/{connection}/accept', [UserConnectionController::class, 'accept'])->name('user-connections.accept');
+    Route::post('/user-connections/{connection}/decline', [UserConnectionController::class, 'decline'])->name('user-connections.decline');
+    Route::post('/user-connections/{connection}/cancel', [UserConnectionController::class, 'cancel'])->name('user-connections.cancel');
+    Route::post('/user-connections/{connection}/block', [UserConnectionController::class, 'block'])->name('user-connections.block');
+    Route::delete('/user-connections/{connection}', [UserConnectionController::class, 'destroy'])->name('user-connections.destroy');
 });
 
 // Group Routes (protected)
 Route::middleware('auth')->group(function () {
     // Group management
-    Route::resource('groups', \App\Http\Controllers\GroupController::class);
-    Route::get('/my-groups', [\App\Http\Controllers\GroupController::class, 'myGroups'])->name('groups.my-groups');
-    Route::post('/groups/{group}/join', [\App\Http\Controllers\GroupController::class, 'join'])->name('groups.join');
-    Route::post('/groups/{group}/leave', [\App\Http\Controllers\GroupController::class, 'leave'])->name('groups.leave');
+    Route::resource('groups', GroupController::class);
+    Route::get('/my-groups', [GroupController::class, 'myGroups'])->name('groups.my-groups');
+    Route::post('/groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');
+    Route::post('/groups/{group}/leave', [GroupController::class, 'leave'])->name('groups.leave');
 
     // Group invitations
-    Route::get('/group-invitations', [\App\Http\Controllers\GroupInvitationController::class, 'index'])->name('group-invitations.index');
-    Route::get('/my-invitations', [\App\Http\Controllers\GroupInvitationController::class, 'index'])->name('groups.my-invitations');
-    Route::post('/group-invitations', [\App\Http\Controllers\GroupInvitationController::class, 'store'])->name('group-invitations.store');
-    Route::get('/group-invitations/{invitation}', [\App\Http\Controllers\GroupInvitationController::class, 'show'])->name('group-invitations.show');
-    Route::post('/group-invitations/{invitation}/accept', [\App\Http\Controllers\GroupInvitationController::class, 'accept'])->name('group-invitations.accept');
-    Route::post('/group-invitations/{invitation}/decline', [\App\Http\Controllers\GroupInvitationController::class, 'decline'])->name('group-invitations.decline');
-    Route::post('/group-invitations/{invitation}/cancel', [\App\Http\Controllers\GroupInvitationController::class, 'cancel'])->name('group-invitations.cancel');
-    Route::post('/group-invitations/bulk-action', [\App\Http\Controllers\GroupInvitationController::class, 'bulkAction'])->name('group-invitations.bulk-action');
+    Route::get('/group-invitations', [GroupInvitationController::class, 'index'])->name('group-invitations.index');
+    Route::get('/my-invitations', [GroupInvitationController::class, 'index'])->name('groups.my-invitations');
+    Route::post('/group-invitations', [GroupInvitationController::class, 'store'])->name('group-invitations.store');
+    Route::get('/group-invitations/{invitation}', [GroupInvitationController::class, 'show'])->name('group-invitations.show');
+    Route::post('/group-invitations/{invitation}/accept', [GroupInvitationController::class, 'accept'])->name('group-invitations.accept');
+    Route::post('/group-invitations/{invitation}/decline', [GroupInvitationController::class, 'decline'])->name('group-invitations.decline');
+    Route::post('/group-invitations/{invitation}/cancel', [GroupInvitationController::class, 'cancel'])->name('group-invitations.cancel');
+    Route::post('/group-invitations/bulk-action', [GroupInvitationController::class, 'bulkAction'])->name('group-invitations.bulk-action');
 
     // Gaming Sessions
-    Route::resource('gaming-sessions', \App\Http\Controllers\GamingSessionController::class);
-    Route::post('/gaming-sessions/{gamingSession}/join', [\App\Http\Controllers\GamingSessionController::class, 'join'])->name('gaming-sessions.join');
-    Route::post('/gaming-sessions/{gamingSession}/leave', [\App\Http\Controllers\GamingSessionController::class, 'leave'])->name('gaming-sessions.leave');
-    Route::get('/search-games', [\App\Http\Controllers\GamingSessionController::class, 'searchGames'])->name('gaming-sessions.search-games');
-    Route::post('/gaming-sessions/invitations/{invitation}/respond', [\App\Http\Controllers\GamingSessionController::class, 'respondToInvitation'])->name('gaming-sessions.respond-invitation');
+    Route::resource('gaming-sessions', GamingSessionController::class);
+    Route::post('/gaming-sessions/{gamingSession}/join', [GamingSessionController::class, 'join'])->name('gaming-sessions.join');
+    Route::post('/gaming-sessions/{gamingSession}/leave', [GamingSessionController::class, 'leave'])->name('gaming-sessions.leave');
+    Route::get('/search-games', [GamingSessionController::class, 'searchGames'])->name('gaming-sessions.search-games');
+    Route::post('/gaming-sessions/invitations/{invitation}/respond', [GamingSessionController::class, 'respondToInvitation'])->name('gaming-sessions.respond-invitation');
     
     // Gaming Session Messages
-    Route::get('/gaming-sessions/{session}/messages', [\App\Http\Controllers\GamingSessionMessageController::class, 'index'])->name('gaming-sessions.messages.index');
-    Route::post('/gaming-sessions/{session}/messages', [\App\Http\Controllers\GamingSessionMessageController::class, 'store'])->name('gaming-sessions.messages.store');
-    Route::put('/gaming-sessions/{session}/messages/{message}', [\App\Http\Controllers\GamingSessionMessageController::class, 'update'])->name('gaming-sessions.messages.update');
-    Route::delete('/gaming-sessions/{session}/messages/{message}', [\App\Http\Controllers\GamingSessionMessageController::class, 'destroy'])->name('gaming-sessions.messages.destroy');
-    Route::get('/gaming-sessions/{session}/messages/recent', [\App\Http\Controllers\GamingSessionMessageController::class, 'recent'])->name('gaming-sessions.messages.recent');
+    Route::get('/gaming-sessions/{session}/messages', [GamingSessionMessageController::class, 'index'])->name('gaming-sessions.messages.index');
+    Route::post('/gaming-sessions/{session}/messages', [GamingSessionMessageController::class, 'store'])->name('gaming-sessions.messages.store');
+    Route::put('/gaming-sessions/{session}/messages/{message}', [GamingSessionMessageController::class, 'update'])->name('gaming-sessions.messages.update');
+    Route::delete('/gaming-sessions/{session}/messages/{message}', [GamingSessionMessageController::class, 'destroy'])->name('gaming-sessions.messages.destroy');
+    Route::get('/gaming-sessions/{session}/messages/recent', [GamingSessionMessageController::class, 'recent'])->name('gaming-sessions.messages.recent');
     
     // Notifications
-    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
-    Route::get('/notifications/count', [\App\Http\Controllers\NotificationController::class, 'unreadCount'])->name('notifications.count');
-    Route::post('/notifications/subscribe', [\App\Http\Controllers\NotificationController::class, 'subscribe'])->name('notifications.subscribe');
-    Route::post('/notifications/test', [\App\Http\Controllers\NotificationController::class, 'test'])->name('notifications.test');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::get('/notifications/count', [NotificationController::class, 'unreadCount'])->name('notifications.count');
+    Route::post('/notifications/subscribe', [NotificationController::class, 'subscribe'])->name('notifications.subscribe');
+    Route::post('/notifications/test', [NotificationController::class, 'test'])->name('notifications.test');
 
 });

@@ -93,8 +93,16 @@ class GamertagTest extends TestCase
     public function test_public_scope_returns_only_public_gamertags()
     {
         $user = User::factory()->create();
-        $publicGamertag = Gamertag::factory()->create(['user_id' => $user->id, 'is_public' => true]);
-        $privateGamertag = Gamertag::factory()->create(['user_id' => $user->id, 'is_public' => false]);
+        $publicGamertag = Gamertag::factory()->create([
+            'user_id' => $user->id, 
+            'platform' => 'steam',
+            'is_public' => true
+        ]);
+        $privateGamertag = Gamertag::factory()->create([
+            'user_id' => $user->id, 
+            'platform' => 'xbox_live',
+            'is_public' => false
+        ]);
 
         $publicGamertags = Gamertag::public()->get();
 

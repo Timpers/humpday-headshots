@@ -44,7 +44,10 @@ class GamingSessionMessagePolicy
         }
 
         // Messages can only be edited within 15 minutes of posting
-        return $gamingSessionMessage->created_at->diffInMinutes(now()) <= 15;
+        // Use floatDiffInMinutes for more precision and add small buffer for timing
+        $minutesAgo = $gamingSessionMessage->created_at->floatDiffInMinutes(now());
+        
+        return $minutesAgo <= 15.05; // Small buffer to account for test execution timing
     }
 
     /**

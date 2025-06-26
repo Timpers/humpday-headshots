@@ -43,7 +43,7 @@ class GamingSessionPolicy
 
         // For friends_only sessions, check if user is a friend of the host
         if ($gamingSession->privacy === 'friends_only') {
-            return $gamingSession->host->friendUsers()->where('users.id', $user->id)->exists();
+            return $gamingSession->host->isConnectedTo($user->id);
         }
 
         return false;
