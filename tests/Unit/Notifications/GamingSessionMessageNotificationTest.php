@@ -39,11 +39,21 @@ class GamingSessionMessageNotificationTest extends TestCase
         ]);
     }
 
-    public function test_constructor_sets_message_property()
+    public function test_constructor_sets_message_id()
     {
         $notification = new GamingSessionMessageNotification($this->message);
 
-        $this->assertEquals($this->message->id, $notification->message->id);
+        $this->assertEquals($this->message->id, $notification->messageId);
+    }
+
+    public function test_get_message_loads_relationships()
+    {
+        $notification = new GamingSessionMessageNotification($this->message);
+        $retrievedMessage = $notification->getMessage();
+
+        $this->assertEquals($this->message->id, $retrievedMessage->id);
+        $this->assertTrue($retrievedMessage->relationLoaded('gamingSession'));
+        $this->assertTrue($retrievedMessage->relationLoaded('user'));
     }
 
     public function test_via_returns_correct_channels()
@@ -144,8 +154,9 @@ class GamingSessionMessageNotificationTest extends TestCase
         $notification = new GamingSessionMessageNotification($this->message);
 
         // Access the relationships to ensure they work
-        $this->assertEquals($this->session->title, $notification->message->gamingSession->title);
-        $this->assertEquals($this->messageAuthor->name, $notification->message->user->name);
+        $retrievedMessage = $notification->getMessage();
+        $this->assertEquals($this->session->title, $retrievedMessage->gamingSession->title);
+        $this->assertEquals($this->messageAuthor->name, $retrievedMessage->user->name);
     }
 
     public function test_edge_case_exactly_50_chars_in_broadcast_body()

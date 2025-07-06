@@ -43,11 +43,15 @@ class GroupInvitationNotificationTest extends TestCase
     {
         $notification = new GroupInvitationNotification($this->invitation, 'sent');
 
-        $this->assertEquals($this->invitation->id, $notification->invitation->id);
+        $this->assertEquals($this->invitation->id, $notification->invitationId);
         $this->assertEquals('sent', $notification->action);
-        $this->assertTrue($notification->invitation->relationLoaded('group'));
-        $this->assertTrue($notification->invitation->relationLoaded('invitedUser'));
-        $this->assertTrue($notification->invitation->relationLoaded('invitedBy'));
+        
+        // Test that the getInvitation method works and loads relationships
+        $invitation = $notification->getInvitation();
+        $this->assertEquals($this->invitation->id, $invitation->id);
+        $this->assertTrue($invitation->relationLoaded('group'));
+        $this->assertTrue($invitation->relationLoaded('invitedUser'));
+        $this->assertTrue($invitation->relationLoaded('invitedBy'));
     }
 
     public function test_via_returns_correct_channels()

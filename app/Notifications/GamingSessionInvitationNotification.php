@@ -13,7 +13,7 @@ class GamingSessionInvitationNotification extends Notification implements Should
 {
     use Queueable;
 
-    public $invitation;
+    public $invitationId;
     public $action;
 
     /**
@@ -21,8 +21,17 @@ class GamingSessionInvitationNotification extends Notification implements Should
      */
     public function __construct(GamingSessionInvitation $invitation, string $action = 'sent')
     {
-        $this->invitation = $invitation->load(['gamingSession.host', 'invitedUser']);
+        $this->invitationId = $invitation->id;
         $this->action = $action; // 'sent', 'accepted', 'declined'
+    }
+
+    /**
+     * Get the invitation with required relationships.
+     */
+    public function getInvitation(): GamingSessionInvitation
+    {
+        return GamingSessionInvitation::with(['gamingSession.host', 'invitedUser'])
+            ->findOrFail($this->invitationId);
     }
 
     /**
@@ -40,6 +49,8 @@ class GamingSessionInvitationNotification extends Notification implements Should
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $invitation = $this->getInvitation();
+        
         $actionText = match($this->action) {
             'sent' => 'invited you to join',
             'accepted' => 'accepted your invitation to',
@@ -49,13 +60,13 @@ class GamingSessionInvitationNotification extends Notification implements Should
 
         return (new MailMessage)
                     ->subject('Gaming Session Invitation')
-                    ->line($this->invitation->gamingSession->host->name . ' ' . $actionText . ' the gaming session "' . $this->invitation->gamingSession->title . '".')
-                    ->line('Game: ' . $this->invitation->gamingSession->game_name)
-                    ->line('Scheduled for: ' . $this->invitation->gamingSession->scheduled_at->format('M j, Y \a\t g:i A'))
-                    ->when($this->invitation->message, function($mail) {
-                        return $mail->line('Message: "' . $this->invitation->message . '"');
+                    ->line($invitation->gamingSession->host->name . ' ' . $actionText . ' the gaming session "' . $invitation->gamingSession->title . '".')
+                    ->line('Game: ' . $invitation->gamingSession->game_name)
+                    ->line('Scheduled for: ' . $invitation->gamingSession->scheduled_at->format('M j, Y \a\t g:i A'))
+                    ->when($invitation->message, function($mail) use ($invitation) {
+                        return $mail->line('Message: "' . $invitation->message . '"');
                     })
-                    ->action('View Session', route('gaming-sessions.show', $this->invitation->gamingSession))
+                    ->action('View Session', route('gaming-sessions.show', $invitation->gamingSession))
                     ->line('Join the session and have fun gaming!');
     }
 
@@ -66,18 +77,20 @@ class GamingSessionInvitationNotification extends Notification implements Should
      */
     public function toArray(object $notifiable): array
     {
+        $invitation = $this->getInvitation();
+        
         return [
             'type' => 'gaming_session_invitation',
-            'invitation_id' => $this->invitation->id,
+            'invitation_id' => $invitation->id,
             'action' => $this->action,
-            'session_title' => $this->invitation->gamingSession->title,
-            'session_id' => $this->invitation->gaming_session_id,
-            'game_name' => $this->invitation->gamingSession->game_name,
-            'host_name' => $this->invitation->gamingSession->host->name,
-            'host_id' => $this->invitation->gamingSession->host_user_id,
-            'scheduled_at' => $this->invitation->gamingSession->scheduled_at->toISOString(),
-            'message' => $this->invitation->message,
-            'url' => route('gaming-sessions.show', $this->invitation->gamingSession),
+            'session_title' => $invitation->gamingSession->title,
+            'session_id' => $invitation->gaming_session_id,
+            'game_name' => $invitation->gamingSession->game_name,
+            'host_name' => $invitation->gamingSession->host->name,
+            'host_id' => $invitation->gamingSession->host_user_id,
+            'scheduled_at' => $invitation->gamingSession->scheduled_at->toISOString(),
+            'message' => $invitation->message,
+            'url' => route('gaming-sessions.show', $invitation->gamingSession),
         ];
     }
 
@@ -86,6 +99,8 @@ class GamingSessionInvitationNotification extends Notification implements Should
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
+        $invitation = $this->getInvitation();
+        
         $title = match($this->action) {
             'sent' => 'Gaming Session Invitation',
             'accepted' => 'Session Invitation Accepted',
@@ -94,9 +109,9 @@ class GamingSessionInvitationNotification extends Notification implements Should
         };
 
         $body = match($this->action) {
-            'sent' => $this->invitation->gamingSession->host->name . ' invited you to play ' . $this->invitation->gamingSession->game_name,
-            'accepted' => $this->invitation->invitedUser->name . ' will join your ' . $this->invitation->gamingSession->game_name . ' session',
-            'declined' => $this->invitation->invitedUser->name . ' declined your ' . $this->invitation->gamingSession->game_name . ' session',
+            'sent' => $invitation->gamingSession->host->name . ' invited you to play ' . $invitation->gamingSession->game_name,
+            'accepted' => $invitation->invitedUser->name . ' will join your ' . $invitation->gamingSession->game_name . ' session',
+            'declined' => $invitation->invitedUser->name . ' declined your ' . $invitation->gamingSession->game_name . ' session',
             default => 'Gaming session invitation updated'
         };
 
@@ -105,7 +120,7 @@ class GamingSessionInvitationNotification extends Notification implements Should
             'title' => $title,
             'body' => $body,
             'icon' => '/images/gaming-icon.png',
-            'url' => route('gaming-sessions.show', $this->invitation->gamingSession),
+            'url' => route('gaming-sessions.show', $invitation->gamingSession),
             'data' => $this->toArray($notifiable),
         ]);
     }

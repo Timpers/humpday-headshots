@@ -13,14 +13,23 @@ class GamingSessionMessageNotification extends Notification implements ShouldQue
 {
     use Queueable;
 
-    public $message;
+    public $messageId;
 
     /**
      * Create a new notification instance.
      */
     public function __construct(GamingSessionMessage $message)
     {
-        $this->message = $message;
+        $this->messageId = $message->id;
+    }
+
+    /**
+     * Get the message with required relationships.
+     */
+    public function getMessage(): GamingSessionMessage
+    {
+        return GamingSessionMessage::with(['gamingSession', 'user'])
+            ->findOrFail($this->messageId);
     }
 
     /**
@@ -38,11 +47,13 @@ class GamingSessionMessageNotification extends Notification implements ShouldQue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $message = $this->getMessage();
+        
         return (new MailMessage)
-                    ->subject('New message in ' . $this->message->gamingSession->title)
-                    ->line($this->message->user->name . ' posted a new message in the gaming session "' . $this->message->gamingSession->title . '".')
-                    ->line('"' . $this->message->message . '"')
-                    ->action('View Messages', route('gaming-sessions.messages.index', $this->message->gamingSession))
+                    ->subject('New message in ' . $message->gamingSession->title)
+                    ->line($message->user->name . ' posted a new message in the gaming session "' . $message->gamingSession->title . '".')
+                    ->line('"' . $message->message . '"')
+                    ->action('View Messages', route('gaming-sessions.messages.index', $message->gamingSession))
                     ->line('Join the conversation!');
     }
 
@@ -53,15 +64,17 @@ class GamingSessionMessageNotification extends Notification implements ShouldQue
      */
     public function toArray(object $notifiable): array
     {
+        $message = $this->getMessage();
+        
         return [
             'type' => 'gaming_session_message',
-            'message_id' => $this->message->id,
-            'session_id' => $this->message->gaming_session_id,
-            'session_title' => $this->message->gamingSession->title,
-            'sender_name' => $this->message->user->name,
-            'sender_id' => $this->message->user_id,
-            'message_preview' => substr($this->message->message, 0, 100),
-            'url' => route('gaming-sessions.messages.index', $this->message->gamingSession),
+            'message_id' => $message->id,
+            'session_id' => $message->gaming_session_id,
+            'session_title' => $message->gamingSession->title,
+            'sender_name' => $message->user->name,
+            'sender_id' => $message->user_id,
+            'message_preview' => substr($message->message, 0, 100),
+            'url' => route('gaming-sessions.messages.index', $message->gamingSession),
         ];
     }
 
@@ -70,12 +83,14 @@ class GamingSessionMessageNotification extends Notification implements ShouldQue
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
+        $message = $this->getMessage();
+        
         return new BroadcastMessage([
             'type' => 'gaming_session_message',
-            'title' => 'New Message in ' . $this->message->gamingSession->title,
-            'body' => $this->message->user->name . ': ' . substr($this->message->message, 0, 50) . '...',
+            'title' => 'New Message in ' . $message->gamingSession->title,
+            'body' => $message->user->name . ': ' . substr($message->message, 0, 50) . '...',
             'icon' => '/images/message-icon.png',
-            'url' => route('gaming-sessions.messages.index', $this->message->gamingSession),
+            'url' => route('gaming-sessions.messages.index', $message->gamingSession),
             'data' => $this->toArray($notifiable),
         ]);
     }

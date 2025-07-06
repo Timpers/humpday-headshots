@@ -37,9 +37,13 @@ class ConnectionRequestNotificationTest extends TestCase
     {
         $notification = new ConnectionRequestNotification($this->connection, 'sent');
 
-        $this->assertEquals($this->connection->id, $notification->connection->id);
+        $this->assertEquals($this->connection->id, $notification->connectionId);
         $this->assertEquals('sent', $notification->action);
-        $this->assertTrue($notification->connection->relationLoaded('requester'));
+        
+        // Test that the getConnection method works and loads relationships
+        $connection = $notification->getConnection();
+        $this->assertEquals($this->connection->id, $connection->id);
+        $this->assertTrue($connection->relationLoaded('requester'));
     }
 
     public function test_via_returns_correct_channels()

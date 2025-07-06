@@ -248,4 +248,268 @@ class GamingSessionParticipantTest extends TestCase
             $participant->user_id === $user->id && $participant->isActive()
         ));
     }
+
+    public function test_leave_method_updates_status_and_timestamp()
+    {
+        $participant = GamingSessionParticipant::factory()->joined()->create();
+        
+        // Ensure participant is initially active
+        $this->assertTrue($participant->isActive());
+        $this->assertEquals(GamingSessionParticipant::STATUS_JOINED, $participant->status);
+        $this->assertNull($participant->left_at);
+
+        // Record time before leaving
+        $beforeLeaving = now()->subSecond();
+        
+        // Call the leave method
+        $result = $participant->leave();
+        
+        // Refresh the model to get updated data
+        $participant->refresh();
+        
+        // Verify the leave method returned true
+        $this->assertTrue($result);
+        
+        // Verify status was updated
+        $this->assertEquals(GamingSessionParticipant::STATUS_LEFT, $participant->status);
+        $this->assertFalse($participant->isActive());
+        
+        // Verify left_at timestamp was set
+        $this->assertNotNull($participant->left_at);
+        $this->assertGreaterThan($beforeLeaving, $participant->left_at);
+        $this->assertLessThanOrEqual(now(), $participant->left_at);
+    }
+
+    public function test_kick_method_updates_status_and_timestamp()
+    {
+        $participant = GamingSessionParticipant::factory()->joined()->create();
+        
+        // Ensure participant is initially active
+        $this->assertTrue($participant->isActive());
+        $this->assertEquals(GamingSessionParticipant::STATUS_JOINED, $participant->status);
+        $this->assertNull($participant->left_at);
+
+        // Record time before kicking
+        $beforeKicking = now()->subSecond();
+        
+        // Call the kick method
+        $result = $participant->kick();
+        
+        // Refresh the model to get updated data
+        $participant->refresh();
+        
+        // Verify the kick method returned true
+        $this->assertTrue($result);
+        
+        // Verify status was updated
+        $this->assertEquals(GamingSessionParticipant::STATUS_KICKED, $participant->status);
+        $this->assertFalse($participant->isActive());
+        
+        // Verify left_at timestamp was set
+        $this->assertNotNull($participant->left_at);
+        $this->assertGreaterThan($beforeKicking, $participant->left_at);
+        $this->assertLessThanOrEqual(now(), $participant->left_at);
+    }
+
+    public function test_leave_method_persists_changes_to_database()
+    {
+        $participant = GamingSessionParticipant::factory()->joined()->create();
+        
+        $participant->leave();
+        
+        // Verify changes were persisted to database
+        $this->assertDatabaseHas('gaming_session_participants', [
+            'id' => $participant->id,
+            'status' => GamingSessionParticipant::STATUS_LEFT,
+        ]);
+        
+        // Verify left_at is not null in database
+        $freshParticipant = GamingSessionParticipant::find($participant->id);
+        $this->assertNotNull($freshParticipant->left_at);
+    }
+
+    public function test_kick_method_persists_changes_to_database()
+    {
+        $participant = GamingSessionParticipant::factory()->joined()->create();
+        
+        $participant->kick();
+        
+        // Verify changes were persisted to database
+        $this->assertDatabaseHas('gaming_session_participants', [
+            'id' => $participant->id,
+            'status' => GamingSessionParticipant::STATUS_KICKED,
+        ]);
+        
+        // Verify left_at is not null in database
+        $freshParticipant = GamingSessionParticipant::find($participant->id);
+        $this->assertNotNull($freshParticipant->left_at);
+    }
+
+    public function test_leave_method_can_be_called_on_already_left_participant()
+    {
+        // Create participant with left status and a past left_at timestamp
+        $pastTime = now()->subMinute();
+        $participant = GamingSessionParticipant::factory()->create([
+            'status' => GamingSessionParticipant::STATUS_LEFT,
+            'left_at' => $pastTime,
+        ]);
+        
+        // Store original left_at timestamp
+        $originalLeftAt = $participant->left_at;
+        
+        // Leave again
+        $result = $participant->leave();
+        $participant->refresh();
+        
+        // Verify the method still returns true
+        $this->assertTrue($result);
+        
+        // Verify status remains left
+        $this->assertEquals(GamingSessionParticipant::STATUS_LEFT, $participant->status);
+        
+        // Verify left_at timestamp was updated to a new time
+        $this->assertNotNull($participant->left_at);
+        $this->assertGreaterThan($originalLeftAt, $participant->left_at);
+    }
+
+    public function test_kick_method_can_be_called_on_already_kicked_participant()
+    {
+        $participant = GamingSessionParticipant::factory()->create([
+            'status' => GamingSessionParticipant::STATUS_KICKED,
+            'left_at' => now()->subHour(),
+        ]);
+        
+        // Store original left_at timestamp
+        $originalLeftAt = $participant->left_at;
+        
+        // Kick again
+        $result = $participant->kick();
+        $participant->refresh();
+        
+        // Verify the method still returns true
+        $this->assertTrue($result);
+        
+        // Verify status remains kicked
+        $this->assertEquals(GamingSessionParticipant::STATUS_KICKED, $participant->status);
+        
+        // Verify left_at timestamp was updated to a new time
+        $this->assertNotNull($participant->left_at);
+        $this->assertGreaterThan($originalLeftAt, $participant->left_at);
+    }
+
+    public function test_leave_method_on_kicked_participant()
+    {
+        $participant = GamingSessionParticipant::factory()->create([
+            'status' => GamingSessionParticipant::STATUS_KICKED,
+            'left_at' => now()->subHour(),
+        ]);
+        
+        // Store original left_at timestamp
+        $originalLeftAt = $participant->left_at;
+        
+        // Leave after being kicked
+        $result = $participant->leave();
+        $participant->refresh();
+        
+        // Verify the method returns true
+        $this->assertTrue($result);
+        
+        // Verify status changed from kicked to left
+        $this->assertEquals(GamingSessionParticipant::STATUS_LEFT, $participant->status);
+        
+        // Verify left_at timestamp was updated
+        $this->assertNotNull($participant->left_at);
+        $this->assertGreaterThan($originalLeftAt, $participant->left_at);
+    }
+
+    public function test_kick_method_on_left_participant()
+    {
+        // Create participant with left status and a past left_at timestamp
+        $pastTime = now()->subMinute();
+        $participant = GamingSessionParticipant::factory()->create([
+            'status' => GamingSessionParticipant::STATUS_LEFT,
+            'left_at' => $pastTime,
+        ]);
+        
+        // Store original left_at timestamp
+        $originalLeftAt = $participant->left_at;
+        
+        // Kick after leaving
+        $result = $participant->kick();
+        $participant->refresh();
+        
+        // Verify the method returns true
+        $this->assertTrue($result);
+        
+        // Verify status changed from left to kicked
+        $this->assertEquals(GamingSessionParticipant::STATUS_KICKED, $participant->status);
+        
+        // Verify left_at timestamp was updated
+        $this->assertNotNull($participant->left_at);
+        $this->assertGreaterThan($originalLeftAt, $participant->left_at);
+    }
+
+    public function test_is_active_returns_false_after_leave()
+    {
+        $participant = GamingSessionParticipant::factory()->joined()->create();
+        
+        $this->assertTrue($participant->isActive());
+        
+        $participant->leave();
+        
+        $this->assertFalse($participant->isActive());
+    }
+
+    public function test_is_active_returns_false_after_kick()
+    {
+        $participant = GamingSessionParticipant::factory()->joined()->create();
+        
+        $this->assertTrue($participant->isActive());
+        
+        $participant->kick();
+        
+        $this->assertFalse($participant->isActive());
+    }
+
+    public function test_active_scope_excludes_left_participants()
+    {
+        $session = GamingSession::factory()->create();
+        
+        // Create active participants
+        $activeParticipants = GamingSessionParticipant::factory()->joined()->count(2)->create([
+            'gaming_session_id' => $session->id,
+        ]);
+        
+        // Create left participant
+        $leftParticipant = GamingSessionParticipant::factory()->joined()->create([
+            'gaming_session_id' => $session->id,
+        ]);
+        $leftParticipant->leave();
+        
+        $activeResults = GamingSessionParticipant::active()->forSession($session)->get();
+        
+        $this->assertEquals(2, $activeResults->count());
+        $this->assertTrue($activeResults->every(fn($p) => $p->status === GamingSessionParticipant::STATUS_JOINED));
+    }
+
+    public function test_active_scope_excludes_kicked_participants()
+    {
+        $session = GamingSession::factory()->create();
+        
+        // Create active participants
+        $activeParticipants = GamingSessionParticipant::factory()->joined()->count(2)->create([
+            'gaming_session_id' => $session->id,
+        ]);
+        
+        // Create kicked participant
+        $kickedParticipant = GamingSessionParticipant::factory()->joined()->create([
+            'gaming_session_id' => $session->id,
+        ]);
+        $kickedParticipant->kick();
+        
+        $activeResults = GamingSessionParticipant::active()->forSession($session)->get();
+        
+        $this->assertEquals(2, $activeResults->count());
+        $this->assertTrue($activeResults->every(fn($p) => $p->status === GamingSessionParticipant::STATUS_JOINED));
+    }
 }

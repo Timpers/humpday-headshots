@@ -43,14 +43,22 @@ class GamingSessionInvitationNotificationTest extends TestCase
         ]);
     }
 
-    public function test_constructor_loads_relationships()
+    public function test_constructor_stores_invitation_id()
     {
         $notification = new GamingSessionInvitationNotification($this->invitation, 'sent');
 
-        $this->assertEquals($this->invitation->id, $notification->invitation->id);
+        $this->assertEquals($this->invitation->id, $notification->invitationId);
         $this->assertEquals('sent', $notification->action);
-        $this->assertTrue($notification->invitation->relationLoaded('gamingSession'));
-        $this->assertTrue($notification->invitation->relationLoaded('invitedUser'));
+    }
+
+    public function test_get_invitation_loads_relationships()
+    {
+        $notification = new GamingSessionInvitationNotification($this->invitation, 'sent');
+        $retrievedInvitation = $notification->getInvitation();
+
+        $this->assertEquals($this->invitation->id, $retrievedInvitation->id);
+        $this->assertTrue($retrievedInvitation->relationLoaded('gamingSession'));
+        $this->assertTrue($retrievedInvitation->relationLoaded('invitedUser'));
     }
 
     public function test_via_returns_correct_channels()

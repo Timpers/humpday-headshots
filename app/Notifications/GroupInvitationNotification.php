@@ -13,7 +13,7 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $invitation;
+    public $invitationId;
     public $action;
 
     /**
@@ -21,8 +21,16 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
      */
     public function __construct(GroupInvitation $invitation, string $action = 'sent')
     {
-        $this->invitation = $invitation->load(['group', 'invitedUser', 'invitedBy']);
+        $this->invitationId = $invitation->id;
         $this->action = $action; // 'sent', 'accepted', 'declined'
+    }
+
+    /**
+     * Get the invitation model.
+     */
+    public function getInvitation(): GroupInvitation
+    {
+        return GroupInvitation::with(['group', 'invitedUser', 'invitedBy'])->find($this->invitationId);
     }
 
     /**
@@ -40,6 +48,8 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $invitation = $this->getInvitation();
+        
         $actionText = match($this->action) {
             'sent' => 'invited you to join',
             'accepted' => 'accepted your invitation to',
@@ -49,11 +59,11 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
 
         return (new MailMessage)
                     ->subject('Group Invitation Update')
-                    ->line($this->invitation->invitedBy->name . ' ' . $actionText . ' the group "' . $this->invitation->group->name . '".')
-                    ->when($this->invitation->message, function($mail) {
-                        return $mail->line('Message: "' . $this->invitation->message . '"');
+                    ->line($invitation->invitedBy->name . ' ' . $actionText . ' the group "' . $invitation->group->name . '".')
+                    ->when($invitation->message, function($mail) use ($invitation) {
+                        return $mail->line('Message: "' . $invitation->message . '"');
                     })
-                    ->action('View Group', route('groups.show', $this->invitation->group))
+                    ->action('View Group', route('groups.show', $invitation->group))
                     ->line('Join the group to connect with other members!');
     }
 
@@ -64,16 +74,18 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
+        $invitation = $this->getInvitation();
+        
         return [
             'type' => 'group_invitation',
-            'invitation_id' => $this->invitation->id,
+            'invitation_id' => $invitation->id,
             'action' => $this->action,
-            'group_name' => $this->invitation->group->name,
-            'group_id' => $this->invitation->group_id,
-            'inviter_name' => $this->invitation->invitedBy->name,
-            'inviter_id' => $this->invitation->invited_by_user_id,
-            'message' => $this->invitation->message,
-            'url' => route('groups.show', $this->invitation->group),
+            'group_name' => $invitation->group->name,
+            'group_id' => $invitation->group_id,
+            'inviter_name' => $invitation->invitedBy->name,
+            'inviter_id' => $invitation->invited_by_user_id,
+            'message' => $invitation->message,
+            'url' => route('groups.show', $invitation->group),
         ];
     }
 
@@ -82,6 +94,8 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
+        $invitation = $this->getInvitation();
+        
         $title = match($this->action) {
             'sent' => 'Group Invitation',
             'accepted' => 'Group Invitation Accepted',
@@ -90,9 +104,9 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
         };
 
         $body = match($this->action) {
-            'sent' => $this->invitation->invitedBy->name . ' invited you to join ' . $this->invitation->group->name,
-            'accepted' => $this->invitation->invitedUser->name . ' joined ' . $this->invitation->group->name,
-            'declined' => $this->invitation->invitedUser->name . ' declined to join ' . $this->invitation->group->name,
+            'sent' => $invitation->invitedBy->name . ' invited you to join ' . $invitation->group->name,
+            'accepted' => $invitation->invitedUser->name . ' joined ' . $invitation->group->name,
+            'declined' => $invitation->invitedUser->name . ' declined to join ' . $invitation->group->name,
             default => 'Group invitation updated'
         };
 
@@ -101,7 +115,7 @@ class GroupInvitationNotification extends Notification implements ShouldQueue
             'title' => $title,
             'body' => $body,
             'icon' => '/images/group-icon.png',
-            'url' => route('groups.show', $this->invitation->group),
+            'url' => route('groups.show', $invitation->group),
             'data' => $this->toArray($notifiable),
         ]);
     }

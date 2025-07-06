@@ -13,7 +13,7 @@ class ConnectionRequestNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $connection;
+    public $connectionId;
     public $action;
 
     /**
@@ -21,8 +21,16 @@ class ConnectionRequestNotification extends Notification implements ShouldQueue
      */
     public function __construct(UserConnection $connection, string $action = 'sent')
     {
-        $this->connection = $connection->load('requester');
+        $this->connectionId = $connection->id;
         $this->action = $action; // 'sent', 'accepted', 'declined'
+    }
+
+    /**
+     * Get the connection model.
+     */
+    public function getConnection(): UserConnection
+    {
+        return UserConnection::with('requester')->find($this->connectionId);
     }
 
     /**
@@ -40,6 +48,8 @@ class ConnectionRequestNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $connection = $this->getConnection();
+        
         $actionText = match($this->action) {
             'sent' => 'sent you a connection request',
             'accepted' => 'accepted your connection request',
@@ -49,9 +59,9 @@ class ConnectionRequestNotification extends Notification implements ShouldQueue
 
         return (new MailMessage)
                     ->subject('Connection Request Update')
-                    ->line($this->connection->requester->name . ' ' . $actionText . '.')
-                    ->when($this->connection->message, function($mail) {
-                        return $mail->line('Message: "' . $this->connection->message . '"');
+                    ->line($connection->requester->name . ' ' . $actionText . '.')
+                    ->when($connection->message, function($mail) use ($connection) {
+                        return $mail->line('Message: "' . $connection->message . '"');
                     })
                     ->action('View Connections', route('social.requests'))
                     ->line('Manage your connections in your social hub.');
@@ -64,13 +74,15 @@ class ConnectionRequestNotification extends Notification implements ShouldQueue
      */
     public function toArray(object $notifiable): array
     {
+        $connection = $this->getConnection();
+        
         return [
             'type' => 'connection_request',
-            'connection_id' => $this->connection->id,
+            'connection_id' => $connection->id,
             'action' => $this->action,
-            'requester_name' => $this->connection->requester->name,
-            'requester_id' => $this->connection->requester_id,
-            'message' => $this->connection->message,
+            'requester_name' => $connection->requester->name,
+            'requester_id' => $connection->requester_id,
+            'message' => $connection->message,
             'url' => route('social.requests'),
         ];
     }
@@ -80,6 +92,8 @@ class ConnectionRequestNotification extends Notification implements ShouldQueue
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
+        $connection = $this->getConnection();
+        
         $title = match($this->action) {
             'sent' => 'New Connection Request',
             'accepted' => 'Connection Request Accepted',
@@ -88,9 +102,9 @@ class ConnectionRequestNotification extends Notification implements ShouldQueue
         };
 
         $body = match($this->action) {
-            'sent' => $this->connection->requester->name . ' wants to connect with you',
-            'accepted' => $this->connection->requester->name . ' accepted your connection request',
-            'declined' => $this->connection->requester->name . ' declined your connection request',
+            'sent' => $connection->requester->name . ' wants to connect with you',
+            'accepted' => $connection->requester->name . ' accepted your connection request',
+            'declined' => $connection->requester->name . ' declined your connection request',
             default => 'Connection request updated'
         };
 

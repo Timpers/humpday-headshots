@@ -30,6 +30,7 @@ class GamingSessionMessageFactory extends Factory
             'gaming_session_id' => GamingSession::factory(),
             'user_id' => User::factory(),
             'message' => $this->faker->realText(200),
+            'type' => GamingSessionMessage::TYPE_TEXT, // Always default to text to avoid enum issues
             'created_at' => $this->faker->dateTimeBetween('-1 hour', 'now'),
             'updated_at' => function (array $attributes) {
                 return $attributes['created_at'];
@@ -94,6 +95,54 @@ class GamingSessionMessageFactory extends Factory
             return [
                 'created_at' => $time,
                 'updated_at' => $time,
+            ];
+        });
+    }
+
+    /**
+     * Create a text message.
+     */
+    public function text(): Factory
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'type' => GamingSessionMessage::TYPE_TEXT,
+            ];
+        });
+    }
+
+    /**
+     * Create a system message.
+     */
+    public function system(): Factory
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'type' => GamingSessionMessage::TYPE_SYSTEM,
+            ];
+        });
+    }
+
+    /**
+     * Create an announcement message.
+     */
+    public function announcement(): Factory
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'type' => GamingSessionMessage::TYPE_ANNOUNCEMENT,
+            ];
+        });
+    }
+
+    /**
+     * Create an edited message.
+     */
+    public function edited(): Factory
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'edited_at' => $this->faker->dateTimeBetween($attributes['created_at'] ?? '-1 hour', 'now'),
             ];
         });
     }
