@@ -161,8 +161,12 @@ class Group extends Model
     /**
      * Check if a user is a member of this group.
      */
-    public function hasMember(User $user): bool
+    public function hasMember(?User $user): bool
     {
+        if (!$user) {
+            return false;
+        }
+        
         return $this->memberships()->where('user_id', $user->id)->exists();
     }
 
@@ -211,8 +215,12 @@ class Group extends Model
     /**
      * Check if a user has a pending invitation to this group.
      */
-    public function hasPendingInvitation(User $user): bool
+    public function hasPendingInvitation(?User $user): bool
     {
+        if (!$user) {
+            return false;
+        }
+        
         return $this->invitations()
                     ->where('invited_user_id', $user->id)
                     ->where('status', 'pending')

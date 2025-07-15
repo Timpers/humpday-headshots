@@ -101,4 +101,24 @@ class Gamertag extends Model
             default => null,
         };
     }
+
+    /**
+     * The "booting" method of the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // When saving a gamertag as primary, ensure no other gamertag
+        // for the same user/platform is primary
+        static::saving(function ($gamertag) {
+            if ($gamertag->is_primary && $gamertag->user_id && $gamertag->platform) {
+                // Set all other gamertags for this user/platform to non-primary
+                static::where('user_id', $gamertag->user_id)
+                    ->where('platform', $gamertag->platform)
+                    ->where('id', '!=', $gamertag->id ?? 0)
+                    ->update(['is_primary' => false]);
+            }
+        });
+    }
 }

@@ -7,6 +7,7 @@ use App\Models\GamingSessionInvitation;
 use App\Models\GamingSessionParticipant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Tests\TestCase;
 
 class GamingSessionTest extends TestCase
@@ -20,6 +21,12 @@ class GamingSessionTest extends TestCase
 
         $this->assertEquals($host->id, $session->host->id);
         $this->assertEquals($host->name, $session->host->name);
+    }
+
+    public function test_gaming_session_has_many_messages()
+    {
+        $session = GamingSession::factory()->create();
+        $this->assertInstanceOf(HasMany::class, $session->messages());
     }
 
     public function test_gaming_session_has_fillable_attributes()

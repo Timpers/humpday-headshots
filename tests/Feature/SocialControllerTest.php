@@ -277,18 +277,22 @@ class SocialControllerTest extends TestCase
         $currentUser = User::factory()->create();
         $searchUser = User::factory()->create();
 
-        // Create private gamertag
+        // Create private gamertag on steam platform
         Gamertag::factory()->create([
             'user_id' => $searchUser->id,
             'gamertag' => 'PrivateTag',
+            'platform' => 'steam',
             'is_public' => false,
+            'is_primary' => true,
         ]);
 
-        // Create public gamertag
+        // Create public gamertag on xbox platform
         Gamertag::factory()->create([
             'user_id' => $searchUser->id,
             'gamertag' => 'PublicTag',
+            'platform' => 'xbox_live',
             'is_public' => true,
+            'is_primary' => true,
         ]);
 
         $response = $this->actingAs($currentUser)->get(route('social.search', [
@@ -314,10 +318,15 @@ class SocialControllerTest extends TestCase
             'is_public' => true,
         ]);
 
-        $response = $this->actingAs($currentUser)->getJson(route('social.search', [
-            'query' => 'Searchable',
-            'type' => 'all',
-        ]));
+        $response = $this->actingAs($currentUser)
+            ->withHeaders([
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Accept' => 'application/json',
+            ])
+            ->get(route('social.search', [
+                'query' => 'Searchable',
+                'type' => 'all',
+            ]));
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -556,10 +565,15 @@ class SocialControllerTest extends TestCase
             'status' => UserConnection::STATUS_PENDING,
         ]);
 
-        $response = $this->actingAs($currentUser)->getJson(route('social.search', [
-            'query' => 'User',
-            'type' => 'users',
-        ]));
+        $response = $this->actingAs($currentUser)
+            ->withHeaders([
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Accept' => 'application/json',
+            ])
+            ->get(route('social.search', [
+                'query' => 'User',
+                'type' => 'users',
+            ]));
 
         $response->assertStatus(200);
         $data = $response->json();
@@ -618,9 +632,14 @@ class SocialControllerTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($currentUser)->getJson(route('social.search', [
-            'type' => 'users',
-        ]));
+        $response = $this->actingAs($currentUser)
+            ->withHeaders([
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Accept' => 'application/json',
+            ])
+            ->get(route('social.search', [
+                'type' => 'users',
+            ]));
 
         $response->assertStatus(200);
         $data = $response->json();

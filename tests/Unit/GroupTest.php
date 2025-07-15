@@ -348,4 +348,24 @@ class GroupTest extends TestCase
         $this->assertTrue($results->contains('id', $targetGroup->id));
         $this->assertFalse($results->contains('id', $otherGroup->id));
     }
+
+    public function test_has_member_returns_false_for_null_user()
+    {
+        $group = Group::factory()->create();
+
+        // Test the early return on line 167 when user is null
+        $result = $group->hasMember(null);
+
+        $this->assertFalse($result);
+    }
+
+    public function test_has_pending_invitation_returns_false_for_null_user()
+    {
+        $group = Group::factory()->create();
+
+        // Test the early return on line 221 when user is null
+        $result = $group->hasPendingInvitation(null);
+
+        $this->assertFalse($result);
+    }
 }

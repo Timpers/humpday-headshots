@@ -22,20 +22,27 @@
                         </p>
                     </div>
                     <div class="flex gap-2">
-                        <a href="{{ route('groups.my-groups') }}" 
-                           class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 transition-colors">
-                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                            My Groups
-                        </a>
-                        <a href="{{ route('groups.create') }}" 
-                           class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:ring-2 focus:ring-green-500 transition-colors">
-                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Create Group
-                        </a>
+                        @auth
+                            <a href="{{ route('groups.my-groups') }}" 
+                               class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 transition-colors">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                My Groups
+                            </a>
+                            <a href="{{ route('groups.create') }}" 
+                               class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:ring-2 focus:ring-green-500 transition-colors">
+                                <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Create Group
+                            </a>
+                        @else
+                            <a href="{{ route('login') }}" 
+                               class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 transition-colors">
+                                Login to Join Groups
+                            </a>
+                        @endauth
                     </div>
                 </div>
             </div>
@@ -168,22 +175,30 @@
                                 </div>
 
                                 <div class="flex gap-2">
-                                    @if($group->hasMember(Auth::user()))
-                                        <span class="px-3 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 rounded-full">
-                                            Member
-                                        </span>
-                                    @elseif($group->hasPendingInvitation(Auth::user()))
-                                        <span class="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 rounded-full">
-                                            Invited
-                                        </span>
-                                    @elseif($group->is_public && !$group->isFull())
-                                        <form action="{{ route('groups.join', $group) }}" method="POST" class="inline">
-                                            @csrf
-                                            <button type="submit" class="px-3 py-1 text-xs bg-blue-600 text-white rounded-full hover:bg-blue-700">
-                                                Join
-                                            </button>
-                                        </form>
-                                    @endif
+                                    @auth
+                                        @if($group->hasMember(Auth::user()))
+                                            <span class="px-3 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 rounded-full">
+                                                Member
+                                            </span>
+                                        @elseif($group->hasPendingInvitation(Auth::user()))
+                                            <span class="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 rounded-full">
+                                                Invited
+                                            </span>
+                                        @elseif($group->is_public && !$group->isFull())
+                                            <form action="{{ route('groups.join', $group) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="px-3 py-1 text-xs bg-blue-600 text-white rounded-full hover:bg-blue-700">
+                                                    Join
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @else
+                                        @if($group->is_public)
+                                            <span class="px-3 py-1 text-xs bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-full">
+                                                Login to Join
+                                            </span>
+                                        @endif
+                                    @endauth
                                     
                                     <a href="{{ route('groups.show', $group) }}" 
                                        class="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">

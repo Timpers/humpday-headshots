@@ -103,7 +103,7 @@ class GamingSessionMessageController extends Controller
 
         $message->update([
             'message' => $validated['message'],
-            'is_edited' => true
+            'edited_at' => now()
         ]);
 
         $message->load('user:id,name');

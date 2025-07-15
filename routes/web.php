@@ -105,17 +105,29 @@ Route::middleware('auth')->group(function () {
     Route::post('/user-connections', [UserConnectionController::class, 'store'])->name('user-connections.store');
     Route::post('/connections', [UserConnectionController::class, 'store'])->name('connections.store'); // Alias for convenience
     Route::post('/user-connections/{connection}/accept', [UserConnectionController::class, 'accept'])->name('user-connections.accept');
+    Route::post('/connections/{connection}/accept', [UserConnectionController::class, 'accept'])->name('connections.accept'); // Alias
     Route::post('/user-connections/{connection}/decline', [UserConnectionController::class, 'decline'])->name('user-connections.decline');
+    Route::post('/connections/{connection}/decline', [UserConnectionController::class, 'decline'])->name('connections.decline'); // Alias
     Route::post('/user-connections/{connection}/cancel', [UserConnectionController::class, 'cancel'])->name('user-connections.cancel');
+    Route::post('/connections/{connection}/cancel', [UserConnectionController::class, 'cancel'])->name('connections.cancel'); // Alias
     Route::post('/user-connections/{connection}/block', [UserConnectionController::class, 'block'])->name('user-connections.block');
+    Route::post('/connections/{connection}/block', [UserConnectionController::class, 'block'])->name('connections.block'); // Alias
     Route::delete('/user-connections/{connection}', [UserConnectionController::class, 'destroy'])->name('user-connections.destroy');
+    Route::delete('/connections/{connection}', [UserConnectionController::class, 'destroy'])->name('connections.destroy'); // Alias
 });
+
+// Public Group Routes (no authentication required)
+Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
 
 // Group Routes (protected)
 Route::middleware('auth')->group(function () {
-    // Group management
-    Route::resource('groups', GroupController::class);
+    // Group management (protected routes) - specific routes first
+    Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
     Route::get('/my-groups', [GroupController::class, 'myGroups'])->name('groups.my-groups');
+    Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
+    Route::get('/groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit');
+    Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
+    Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
     Route::post('/groups/{group}/join', [GroupController::class, 'join'])->name('groups.join');
     Route::post('/groups/{group}/leave', [GroupController::class, 'leave'])->name('groups.leave');
 
@@ -151,4 +163,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/subscribe', [NotificationController::class, 'subscribe'])->name('notifications.subscribe');
     Route::post('/notifications/test', [NotificationController::class, 'test'])->name('notifications.test');
 
+});
+
+// Groups show route (public but needs to be after specific auth routes)
+Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');
+
+Route::middleware('auth')->group(function () {
 });

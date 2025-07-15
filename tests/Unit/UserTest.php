@@ -508,6 +508,155 @@ class UserTest extends TestCase
         $this->assertFalse($pendingInvitations->contains($acceptedInvitation));
     }
 
+    public function test_user_active_gaming_sessions_returns_only_joined_sessions()
+    {
+        $user = User::factory()->create();
+        $activeSession = GamingSession::factory()->create();
+        $inactiveSession = GamingSession::factory()->create();
+
+        // Create a joined participation (active)
+        GamingSessionParticipant::factory()->create([
+            'user_id' => $user->id,
+            'gaming_session_id' => $activeSession->id,
+            'status' => GamingSessionParticipant::STATUS_JOINED,
+        ]);
+
+        // Create a left participation (inactive)
+        GamingSessionParticipant::factory()->create([
+            'user_id' => $user->id,
+            'gaming_session_id' => $inactiveSession->id,
+            'status' => GamingSessionParticipant::STATUS_LEFT,
+        ]);
+
+        $activeSessions = $user->activeGamingSessions;
+
+        $this->assertEquals(1, $activeSessions->count());
+        $this->assertTrue($activeSessions->contains($activeSession));
+        $this->assertFalse($activeSessions->contains($inactiveSession));
+    }
+
+    public function test_user_active_gaming_sessions_excludes_kicked_participants()
+    {
+        $user = User::factory()->create();
+        $session1 = GamingSession::factory()->create();
+        $session2 = GamingSession::factory()->create();
+
+        // Create a joined participation
+        GamingSessionParticipant::factory()->create([
+            'user_id' => $user->id,
+            'gaming_session_id' => $session1->id,
+            'status' => GamingSessionParticipant::STATUS_JOINED,
+        ]);
+
+        // Create a kicked participation
+        GamingSessionParticipant::factory()->create([
+            'user_id' => $user->id,
+            'gaming_session_id' => $session2->id,
+            'status' => GamingSessionParticipant::STATUS_KICKED,
+        ]);
+
+        $activeSessions = $user->activeGamingSessions;
+
+        $this->assertEquals(1, $activeSessions->count());
+        $this->assertTrue($activeSessions->contains($session1));
+        $this->assertFalse($activeSessions->contains($session2));
+    }
+
+    public function test_user_active_gaming_sessions_includes_pivot_data()
+    {
+        $user = User::factory()->create();
+        $session = GamingSession::factory()->create();
+        $joinedAt = now()->subHour();
+        $notes = 'Test participation notes';
+
+        GamingSessionParticipant::factory()->create([
+            'user_id' => $user->id,
+            'gaming_session_id' => $session->id,
+            'status' => GamingSessionParticipant::STATUS_JOINED,
+            'joined_at' => $joinedAt,
+            'notes' => $notes,
+        ]);
+
+        $activeSessions = $user->activeGamingSessions;
+        $sessionWithPivot = $activeSessions->first();
+
+        $this->assertEquals(GamingSessionParticipant::STATUS_JOINED, $sessionWithPivot->pivot->status);
+        $this->assertEquals($notes, $sessionWithPivot->pivot->notes);
+        $this->assertNotNull($sessionWithPivot->pivot->joined_at);
+        $this->assertNotNull($sessionWithPivot->pivot->created_at);
+        $this->assertNotNull($sessionWithPivot->pivot->updated_at);
+        
+        // Test that joined_at is approximately equal to what we set (allowing for small time differences)
+        $pivotJoinedAt = is_string($sessionWithPivot->pivot->joined_at) 
+            ? \Carbon\Carbon::parse($sessionWithPivot->pivot->joined_at)
+            : $sessionWithPivot->pivot->joined_at;
+        $this->assertTrue($pivotJoinedAt->diffInSeconds($joinedAt) < 5);
+    }
+
+    public function test_user_active_gaming_sessions_returns_empty_collection_when_no_active_sessions()
+    {
+        $user = User::factory()->create();
+        $session = GamingSession::factory()->create();
+
+        // Create only a left participation (not active)
+        GamingSessionParticipant::factory()->create([
+            'user_id' => $user->id,
+            'gaming_session_id' => $session->id,
+            'status' => GamingSessionParticipant::STATUS_LEFT,
+        ]);
+
+        $activeSessions = $user->activeGamingSessions;
+
+        $this->assertEquals(0, $activeSessions->count());
+        $this->assertTrue($activeSessions->isEmpty());
+    }
+
+    public function test_user_active_gaming_sessions_can_handle_multiple_joined_sessions()
+    {
+        $user = User::factory()->create();
+        $session1 = GamingSession::factory()->create();
+        $session2 = GamingSession::factory()->create();
+        $session3 = GamingSession::factory()->create();
+
+        // Create multiple joined participations
+        GamingSessionParticipant::factory()->create([
+            'user_id' => $user->id,
+            'gaming_session_id' => $session1->id,
+            'status' => GamingSessionParticipant::STATUS_JOINED,
+        ]);
+
+        GamingSessionParticipant::factory()->create([
+            'user_id' => $user->id,
+            'gaming_session_id' => $session2->id,
+            'status' => GamingSessionParticipant::STATUS_JOINED,
+        ]);
+
+        GamingSessionParticipant::factory()->create([
+            'user_id' => $user->id,
+            'gaming_session_id' => $session3->id,
+            'status' => GamingSessionParticipant::STATUS_JOINED,
+        ]);
+
+        $activeSessions = $user->activeGamingSessions;
+
+        $this->assertEquals(3, $activeSessions->count());
+        $this->assertTrue($activeSessions->contains($session1));
+        $this->assertTrue($activeSessions->contains($session2));
+        $this->assertTrue($activeSessions->contains($session3));
+    }
+
+    public function test_user_active_gaming_sessions_relationship_returns_belongs_to_many()
+    {
+        $user = User::factory()->create();
+        
+        $relationship = $user->activeGamingSessions();
+        
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class, $relationship);
+        $this->assertEquals('gaming_session_participants', $relationship->getTable());
+        $this->assertEquals('user_id', $relationship->getForeignPivotKeyName());
+        $this->assertEquals('gaming_session_id', $relationship->getRelatedPivotKeyName());
+    }
+
     public function test_user_factory_creates_valid_user()
     {
         $user = User::factory()->create();

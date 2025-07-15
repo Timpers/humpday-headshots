@@ -639,9 +639,198 @@ class UserConnectionControllerTest extends TestCase
             ->post(route('user-connections.block', $connection));
 
         $response->assertRedirect();
-        $response->assertSessionHas('success');
+        $response->assertSessionHas('success', 'User blocked.');
 
-        $connection->refresh();
-        $this->assertEquals(UserConnection::STATUS_BLOCKED, $connection->status);
+        $this->assertDatabaseHas('user_connections', [
+            'id' => $connection->id,
+            'status' => UserConnection::STATUS_BLOCKED,
+        ]);
+    }
+
+    public function test_create_displays_form_with_specific_user()
+    {
+        $currentUser = User::factory()->create();
+        $targetUser = User::factory()->create();
+
+        $response = $this->actingAs($currentUser)
+            ->get(route('user-connections.create', ['user_id' => $targetUser->id]));
+
+        $response->assertStatus(200);
+        $response->assertViewIs('social.connection-request');
+        $response->assertViewHas('user');
+        $response->assertViewHas('availableUsers');
+
+        $user = $response->viewData('user');
+        $this->assertEquals($targetUser->id, $user->id);
+    }
+
+    public function test_create_displays_form_without_specific_user()
+    {
+        $currentUser = User::factory()->create();
+        $availableUser = User::factory()->create();
+
+        $response = $this->actingAs($currentUser)
+            ->get(route('user-connections.create'));
+
+        $response->assertStatus(200);
+        $response->assertViewIs('social.connection-request');
+        $response->assertViewHas('user');
+        $response->assertViewHas('availableUsers');
+
+        $user = $response->viewData('user');
+        $availableUsers = $response->viewData('availableUsers');
+
+        $this->assertNull($user);
+        $this->assertTrue($availableUsers->contains('id', $availableUser->id));
+        $this->assertFalse($availableUsers->contains('id', $currentUser->id)); // Current user excluded
+    }
+
+    public function test_create_prevents_self_connection_attempt()
+    {
+        $currentUser = User::factory()->create();
+
+        $response = $this->actingAs($currentUser)
+            ->get(route('user-connections.create', ['user_id' => $currentUser->id]));
+
+        $response->assertRedirect(route('social.browse'));
+        $response->assertSessionHasErrors(['connection' => 'You cannot connect with yourself.']);
+    }
+
+    public function test_create_prevents_connection_with_existing_pending_request()
+    {
+        $currentUser = User::factory()->create();
+        $targetUser = User::factory()->create();
+
+        // Create existing pending connection
+        UserConnection::factory()->create([
+            'requester_id' => $currentUser->id,
+            'recipient_id' => $targetUser->id,
+            'status' => UserConnection::STATUS_PENDING,
+        ]);
+
+        $response = $this->actingAs($currentUser)
+            ->get(route('user-connections.create', ['user_id' => $targetUser->id]));
+
+        $response->assertRedirect(route('social.browse'));
+        $response->assertSessionHasErrors(['connection' => 'A connection already exists with this user.']);
+    }
+
+    public function test_create_prevents_connection_with_existing_accepted_connection()
+    {
+        $currentUser = User::factory()->create();
+        $targetUser = User::factory()->create();
+
+        // Create existing accepted connection
+        UserConnection::factory()->create([
+            'requester_id' => $currentUser->id,
+            'recipient_id' => $targetUser->id,
+            'status' => UserConnection::STATUS_ACCEPTED,
+        ]);
+
+        $response = $this->actingAs($currentUser)
+            ->get(route('user-connections.create', ['user_id' => $targetUser->id]));
+
+        $response->assertRedirect(route('social.browse'));
+        $response->assertSessionHasErrors(['connection' => 'A connection already exists with this user.']);
+    }
+
+    public function test_create_prevents_connection_with_existing_blocked_connection()
+    {
+        $currentUser = User::factory()->create();
+        $targetUser = User::factory()->create();
+
+        // Create existing blocked connection
+        UserConnection::factory()->create([
+            'requester_id' => $currentUser->id,
+            'recipient_id' => $targetUser->id,
+            'status' => UserConnection::STATUS_BLOCKED,
+        ]);
+
+        $response = $this->actingAs($currentUser)
+            ->get(route('user-connections.create', ['user_id' => $targetUser->id]));
+
+        $response->assertRedirect(route('social.browse'));
+        $response->assertSessionHasErrors(['connection' => 'A connection already exists with this user.']);
+    }
+
+    public function test_create_prevents_connection_with_existing_reverse_connection()
+    {
+        $currentUser = User::factory()->create();
+        $targetUser = User::factory()->create();
+
+        // Create existing connection with reversed roles
+        UserConnection::factory()->create([
+            'requester_id' => $targetUser->id,
+            'recipient_id' => $currentUser->id,
+            'status' => UserConnection::STATUS_ACCEPTED,
+        ]);
+
+        $response = $this->actingAs($currentUser)
+            ->get(route('user-connections.create', ['user_id' => $targetUser->id]));
+
+        $response->assertRedirect(route('social.browse'));
+        $response->assertSessionHasErrors(['connection' => 'A connection already exists with this user.']);
+    }
+
+    public function test_create_excludes_connected_users_from_available_list()
+    {
+        $currentUser = User::factory()->create();
+        $connectedUser = User::factory()->create();
+        $availableUser = User::factory()->create();
+
+        // Create existing connection
+        UserConnection::factory()->create([
+            'requester_id' => $currentUser->id,
+            'recipient_id' => $connectedUser->id,
+            'status' => UserConnection::STATUS_ACCEPTED,
+        ]);
+
+        $response = $this->actingAs($currentUser)
+            ->get(route('user-connections.create'));
+
+        $response->assertStatus(200);
+        $availableUsers = $response->viewData('availableUsers');
+
+        $this->assertFalse($availableUsers->contains('id', $connectedUser->id)); // Connected user excluded
+        $this->assertTrue($availableUsers->contains('id', $availableUser->id)); // Available user included
+        $this->assertFalse($availableUsers->contains('id', $currentUser->id)); // Current user excluded
+    }
+
+    public function test_create_returns_404_for_non_existent_user()
+    {
+        $currentUser = User::factory()->create();
+
+        $response = $this->actingAs($currentUser)
+            ->get(route('user-connections.create', ['user_id' => 99999]));
+
+        $response->assertStatus(404);
+    }
+
+    public function test_create_requires_authentication()
+    {
+        $targetUser = User::factory()->create();
+
+        $response = $this->get(route('user-connections.create', ['user_id' => $targetUser->id]));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_create_loads_user_with_gamertags_relationship()
+    {
+        $currentUser = User::factory()->create();
+        $targetUser = User::factory()->create();
+
+        // Create some gamertags for the target user
+        \App\Models\Gamertag::factory()->count(2)->create(['user_id' => $targetUser->id]);
+
+        $response = $this->actingAs($currentUser)
+            ->get(route('user-connections.create', ['user_id' => $targetUser->id]));
+
+        $response->assertStatus(200);
+        $user = $response->viewData('user');
+        
+        // Verify the gamertags relationship is loaded
+        $this->assertTrue($user->relationLoaded('gamertags'));
+        $this->assertCount(2, $user->gamertags);
     }
 }

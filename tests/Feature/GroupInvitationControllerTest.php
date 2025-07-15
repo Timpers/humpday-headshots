@@ -58,18 +58,20 @@ class GroupInvitationControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $inviter = User::factory()->create();
-        $group = Group::factory()->create(['owner_id' => $inviter->id]);
+        $group1 = Group::factory()->create(['owner_id' => $inviter->id]);
+        $group2 = Group::factory()->create(['owner_id' => $inviter->id]);
 
-        // Create invitations with different statuses
+        // Create invitations with different statuses on different groups
+        // to avoid unique constraint violation
         $pendingInvitation = GroupInvitation::factory()->create([
-            'group_id' => $group->id,
+            'group_id' => $group1->id,
             'invited_user_id' => $user->id,
             'invited_by_user_id' => $inviter->id,
             'status' => GroupInvitation::STATUS_PENDING,
         ]);
 
         $acceptedInvitation = GroupInvitation::factory()->create([
-            'group_id' => $group->id,
+            'group_id' => $group2->id,
             'invited_user_id' => $user->id,
             'invited_by_user_id' => $inviter->id,
             'status' => GroupInvitation::STATUS_ACCEPTED,
@@ -820,5 +822,61 @@ class GroupInvitationControllerTest extends TestCase
             $response = $this->$method($route);
             $response->assertRedirect(route('login'));
         }
+    }
+
+    public function test_decline_returns_error_when_invitation_not_pending()
+    {
+        $owner = User::factory()->create();
+        $invitedUser = User::factory()->create();
+        $group = Group::factory()->create(['owner_id' => $owner->id]);
+
+        // Create an already accepted invitation
+        $invitation = GroupInvitation::factory()->create([
+            'group_id' => $group->id,
+            'invited_user_id' => $invitedUser->id,
+            'invited_by_user_id' => $owner->id,
+            'status' => GroupInvitation::STATUS_ACCEPTED,
+        ]);
+
+        $response = $this->actingAs($invitedUser)
+            ->post(route('group-invitations.decline', $invitation));
+
+        // Test the return on line 136
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'This invitation is no longer valid.');
+
+        // Invitation status should remain unchanged
+        $this->assertDatabaseHas('group_invitations', [
+            'id' => $invitation->id,
+            'status' => GroupInvitation::STATUS_ACCEPTED,
+        ]);
+    }
+
+    public function test_cancel_returns_error_when_invitation_not_pending()
+    {
+        $owner = User::factory()->create();
+        $invitedUser = User::factory()->create();
+        $group = Group::factory()->create(['owner_id' => $owner->id]);
+
+        // Create an already declined invitation
+        $invitation = GroupInvitation::factory()->create([
+            'group_id' => $group->id,
+            'invited_user_id' => $invitedUser->id,
+            'invited_by_user_id' => $owner->id,
+            'status' => GroupInvitation::STATUS_DECLINED,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->post(route('group-invitations.cancel', $invitation));
+
+        // Test the return on line 159
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'This invitation is no longer valid.');
+
+        // Invitation status should remain unchanged
+        $this->assertDatabaseHas('group_invitations', [
+            'id' => $invitation->id,
+            'status' => GroupInvitation::STATUS_DECLINED,
+        ]);
     }
 }

@@ -82,17 +82,17 @@ class GroupControllerTest extends TestCase
 
         $pcGroup = Group::factory()->create([
             'owner_id' => $owner->id,
-            'platform' => 'pc',
+            'platform' => 'steam',
             'is_public' => true,
         ]);
 
         $xboxGroup = Group::factory()->create([
             'owner_id' => $owner->id,
-            'platform' => 'xbox',
+            'platform' => 'xbox_live',
             'is_public' => true,
         ]);
 
-        $response = $this->get(route('groups.index', ['platform' => 'pc']));
+        $response = $this->get(route('groups.index', ['platform' => 'steam']));
 
         $response->assertStatus(200);
         $groups = $response->viewData('groups');
@@ -160,7 +160,7 @@ class GroupControllerTest extends TestCase
             'name' => 'New Gaming Group',
             'description' => 'A great group for gaming',
             'game' => 'Valorant',
-            'platform' => 'pc',
+            'platform' => 'steam',
             'is_public' => true,
             'max_members' => 25,
         ];
@@ -175,7 +175,7 @@ class GroupControllerTest extends TestCase
             'name' => 'New Gaming Group',
             'description' => 'A great group for gaming',
             'game' => 'Valorant',
-            'platform' => 'pc',
+            'platform' => 'steam',
             'is_public' => true,
             'max_members' => 25,
         ]);
@@ -376,7 +376,7 @@ class GroupControllerTest extends TestCase
             'name' => 'Updated Name',
             'description' => 'Updated description',
             'game' => 'New Game',
-            'platform' => 'pc',
+            'platform' => 'steam',
             'is_public' => false,
             'max_members' => 30,
         ];
@@ -392,7 +392,7 @@ class GroupControllerTest extends TestCase
             'name' => 'Updated Name',
             'description' => 'Updated description',
             'game' => 'New Game',
-            'platform' => 'pc',
+            'platform' => 'steam',
             'is_public' => false,
             'max_members' => 30,
         ]);
@@ -714,7 +714,7 @@ class GroupControllerTest extends TestCase
             'owner_id' => $owner->id,
             'name' => 'Valorant PC Squad',
             'game' => 'Valorant',
-            'platform' => 'pc',
+            'platform' => 'steam',
             'is_public' => true,
         ]);
 
@@ -728,7 +728,7 @@ class GroupControllerTest extends TestCase
 
         $response = $this->get(route('groups.index', [
             'game' => 'Valorant',
-            'platform' => 'pc',
+            'platform' => 'steam',
             'search' => 'Squad',
         ]));
 

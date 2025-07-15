@@ -496,7 +496,8 @@ class GamertagControllerTest extends TestCase
 
     public function test_edit_requires_authentication()
     {
-        $gamertag = Gamertag::factory()->create();
+        $user = User::factory()->create();
+        $gamertag = Gamertag::factory()->create(['user_id' => $user->id]);
 
         $response = $this->get(route('gamertags.edit', $gamertag));
 
@@ -518,25 +519,30 @@ class GamertagControllerTest extends TestCase
 
     public function test_index_orders_by_platform_and_gamertag()
     {
-        $user = User::factory()->create();
+        // Clear existing gamertags to test ordering properly
+        \App\Models\Gamertag::query()->delete();
+        
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $user3 = User::factory()->create();
 
         // Create gamertags in specific order to test sorting
         Gamertag::factory()->create([
-            'user_id' => $user->id,
+            'user_id' => $user1->id,
             'platform' => 'xbox_live',
             'gamertag' => 'ZPlayer',
             'is_public' => true,
         ]);
 
         Gamertag::factory()->create([
-            'user_id' => $user->id,
+            'user_id' => $user2->id,
             'platform' => 'steam',
             'gamertag' => 'BPlayer',
             'is_public' => true,
         ]);
 
         Gamertag::factory()->create([
-            'user_id' => $user->id,
+            'user_id' => $user3->id,
             'platform' => 'steam',
             'gamertag' => 'APlayer',
             'is_public' => true,

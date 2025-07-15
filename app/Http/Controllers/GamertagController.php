@@ -74,13 +74,6 @@ class GamertagController extends Controller
         $validated['is_public'] = $request->has('is_public');
         $validated['is_primary'] = $request->has('is_primary');
 
-        // Ensure only one primary gamertag per platform per user
-        if ($validated['is_primary'] ?? false) {
-            Gamertag::where('user_id', Auth::id())
-                ->where('platform', $validated['platform'])
-                ->update(['is_primary' => false]);
-        }
-
         /** @var User $user */
         $user = Auth::user();
         if (!$user) {
@@ -120,14 +113,6 @@ class GamertagController extends Controller
         // Convert checkbox values
         $validated['is_public'] = $request->has('is_public');
         $validated['is_primary'] = $request->has('is_primary');
-
-        // Ensure only one primary gamertag per platform per user
-        if ($validated['is_primary'] ?? false) {
-            Gamertag::where('user_id', Auth::id())
-                ->where('platform', $gamertag->platform)
-                ->where('id', '!=', $gamertag->id)
-                ->update(['is_primary' => false]);
-        }
 
         $gamertag->update($validated);
 

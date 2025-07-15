@@ -96,4 +96,17 @@ class DashboardControllerTest extends TestCase
             return $stats->isEmpty();
         });
     }
+
+    public function test_dashboard_aborts_with_401_when_auth_user_is_null()
+    {
+        // Mock Auth::user() to return null even when we're "authenticated"
+        // This tests the specific abort(401) on line 20 of DashboardController
+        Auth::shouldReceive('user')->andReturn(null);
+
+        // We need to bypass the auth middleware to reach the controller method
+        // Use withoutMiddleware to skip auth middleware and directly test the controller logic
+        $response = $this->withoutMiddleware()->get(route('dashboard'));
+
+        $response->assertStatus(401);
+    }
 }

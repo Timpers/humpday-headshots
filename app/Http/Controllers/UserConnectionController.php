@@ -189,7 +189,9 @@ class UserConnectionController extends Controller
             $connectedUserIds = UserConnection::where(function ($query) {
                 $query->where('requester_id', Auth::id())
                       ->orWhere('recipient_id', Auth::id());
-            })->get()->pluck('requester_id', 'recipient_id')->flatten()->unique();
+            })->get()->flatMap(function ($connection) {
+                return [$connection->requester_id, $connection->recipient_id];
+            })->unique();
 
             $availableUsers = User::whereNotIn('id', $connectedUserIds->push(Auth::id()))->get();
         }
